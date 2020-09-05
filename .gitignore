@@ -1,0 +1,21 @@
+# Framework
+/vendor
+/.env
+.docker
+composer.lock
+
+# PHPUnit
+.phpunit.result.cache
+
+# Larastan
+phpstan.neon
+
+# MacOS
+.DS_Store
+
+# IDEs
+/.idea
+/.vscode
+*.swp
+*.sublime-project
+*.sublime-workspace
