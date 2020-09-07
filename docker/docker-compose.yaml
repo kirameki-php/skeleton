@@ -4,11 +4,13 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        APP_NAME: $APP_NAME
     ports:
       - "9000:80"
     volumes:
-      - ..:/projects/app:delegated
-      - ../../framework:/projects/framework:delegated
+      - ..:/var/www/${APP_NAME}:delegated
+      - ../../framework:/var/www/framework:delegated
     depends_on:
       - mysql
       - redis

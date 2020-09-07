@@ -1,3 +1,5 @@
+include .env
+
 DOCKER_COMPOSE_COMMAND=cd docker && docker-compose -p $(shell basename $(CURDIR))
 
 .PHONY: build
@@ -12,17 +14,21 @@ up:
 down:
 	$(DOCKER_COMPOSE_COMMAND) down --remove-orphans
 
-.PHONY: test
-test:
-	$(DOCKER_COMPOSE_COMMAND) exec app cd tests && phpunit
-
 .PHONY: bash
 bash:
 	$(DOCKER_COMPOSE_COMMAND) exec app bash
 
+.PHONY: test
+test:
+	$(DOCKER_COMPOSE_COMMAND) run app cd tests && phpunit
+
 .PHONY: update
 update:
 	$(DOCKER_COMPOSE_COMMAND) run app composer update
+
+.PHONY: clean
+clean:
+	$(DOCKER_COMPOSE_COMMAND) run app git clean -xdff
 
 .PHONY: mysql
 mysql:

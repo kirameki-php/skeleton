@@ -2,7 +2,7 @@ server {
     listen       80;
     listen       10080;
     server_name  localhost;
-    root /projects/app/public;
+    root /var/www/${APP_NAME}/public;
 
     location / {
         index     index.html index.htm index.php;
