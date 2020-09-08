@@ -5,7 +5,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        APP_NAME: $APP_NAME
+        APP_NAME: ${APP_NAME}
     ports:
       - "9000:80"
     volumes:
