@@ -2,4 +2,4 @@
 
 require '../vendor/autoload.php';
 
-return new Kirameki\Application(dirname(__DIR__));
+return new Kirameki\Core\Application(dirname(__DIR__));

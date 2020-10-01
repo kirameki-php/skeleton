@@ -9,8 +9,8 @@ RUN docker-php-source extract
 RUN apk add --no-cache bash gettext git nginx procps supervisor unzip zip
 RUN apk add --no-cache --virtual=build-deps autoconf curl-dev gcc g++ make oniguruma-dev \
   && docker-php-ext-install -j$(nproc) opcache pcntl pdo pdo_mysql \
-  && pecl install -o -f apcu msgpack redis \
-  && docker-php-ext-enable apcu msgpack redis \
+  && pecl install -o -f apcu igbinary msgpack redis \
+  && docker-php-ext-enable apcu igbinary msgpack redis \
   && apk del build-deps \
   && docker-php-source delete \
   && find /var/log/ -type f -delete
