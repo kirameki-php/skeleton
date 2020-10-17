@@ -1,6 +1,5 @@
 server {
     listen       80;
-    listen       10080;
     server_name  localhost;
     root /var/www/${APP_NAME}/public;
 

@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+// application.php
+
+require __DIR__.'/vendor/autoload.php';
+
+use Kirameki\Database\Migration\Commands\MigrateCommand;
+use Symfony\Component\Console\Application;
+
+$app = require 'app/boot.php';
+
+$console = new Application();
+
+$console->add(new MigrateCommand);
+
+$console->run();

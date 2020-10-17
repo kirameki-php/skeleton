@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'env' => getenv('APP_ENV'),
-    'debug' => getenv('APP_DEBUG'),
+    'name' => env('APP_NAME'),
+    'env' => env('APP_ENV'),
+    'debug' => env('APP_DEBUG'),
     'timezone' => 'Asia/Tokyo',
 ];
