@@ -1,13 +1,16 @@
-<?php
+<?php declare(strict_types=1);
+
+use Kirameki\Http\HttpManager;
+use Kirameki\Http\Request;
 
 /** @var Kirameki\Core\Application $app */
 $app = require '../app/boot.php';
 
-$user = new \App\Models\User();
-$user->id = uuid();
-$user->token = uuid();
-$user->save();
+/** @var HttpManager $http */
+$http = $app->get(HttpManager::class);
 
-$user = \App\Models\User::query()->orderByDesc('createdAt')->first();
+$response = $http->process(Request::fromServerVars());
 
-dump($user);
+dump($response->toString());
+
+$http->send($response);
