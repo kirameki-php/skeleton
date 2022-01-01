@@ -11,6 +11,9 @@ use Kirameki\Model\ReflectionBuilder;
  */
 class User extends Model
 {
+    /**
+     * @param ReflectionBuilder $reflection
+     */
     public static function define(ReflectionBuilder $reflection): void
     {
         $reflection->property('id', 'int');

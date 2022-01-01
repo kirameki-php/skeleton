@@ -1,10 +1,23 @@
 server {
     listen       80;
+
     server_name  localhost;
+
     root /var/www/${APP_NAME}/public;
 
+    location = /favicon.ico {
+        access_log off;
+        log_not_found off;
+    }
+
+    # Do not cache when doing local envs
+    # See https://stackoverflow.com/a/45285696 for details
+    location ~* \.(text|html|css|js|gif|png|jpg)$ {
+        add_header Cache-Control "no-store";
+    }
+
     location / {
-        index     index.html index.htm index.php;
+        index index.php;
         try_files $uri /index.php?$query_string;
     }
 

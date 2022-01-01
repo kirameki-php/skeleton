@@ -9,8 +9,8 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ..:/var/www/${APP_NAME}:delegated
-      - ../../framework:/var/www/framework:delegated
+      - ..:/var/www/${APP_NAME}
+      - ../../framework:/var/www/framework
     depends_on:
       - mysql
       - redis
