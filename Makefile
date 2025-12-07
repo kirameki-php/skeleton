@@ -1,6 +1,3 @@
-include .env
-export
-
 DOCKER_COMPOSE_COMMAND=cd docker && docker-compose -p $(shell basename $(CURDIR))
 
 .PHONY: build
@@ -17,7 +14,7 @@ down:
 
 .PHONY: bash
 bash:
-	$(DOCKER_COMPOSE_COMMAND) exec app bash
+	$(DOCKER_COMPOSE_COMMAND) exec app sh
 
 .PHONY: test
 test:

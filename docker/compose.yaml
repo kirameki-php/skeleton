@@ -1,16 +1,17 @@
-version: "3"
 services:
   app:
     build:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        APP_NAME: ${APP_NAME}
+        APP_NAME: app
     ports:
       - "8080:80"
+    environment:
+      APP_DEVELOP_MODE: true
+      APP_NAMESPACE: "local"
     volumes:
-      - ..:/var/www/${APP_NAME}
-      - ../../framework:/var/www/framework
+      - ..:/var/www/app
     depends_on:
       - mysql
       - redis

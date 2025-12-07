@@ -1,30 +1,28 @@
 FROM composer AS composer
+FROM toyama4649/kirameki-php-cli:latest AS kirameki
 
-FROM php:8-fpm-alpine
+FROM dunglas/frankenphp:1-php8.4-alpine
 
 ARG APP_NAME
-ENV APP_NAME $APP_NAME
-ENV SUPERVISORD_USER root
-ENV TZ Asia/Tokyo
-
-RUN docker-php-source extract
-RUN apk add --no-cache bash gettext git gmp-dev nginx procps supervisor unzip zip
-RUN apk add --no-cache --virtual=build-deps autoconf curl-dev gcc g++ make oniguruma-dev \
-  && docker-php-ext-install -j$(nproc) bcmath gmp opcache pcntl pdo pdo_mysql \
-  && pecl install -o -f apcu igbinary msgpack redis \
-  && docker-php-ext-enable apcu bcmath igbinary msgpack redis \
-  && apk del build-deps \
-  && docker-php-source delete \
-  && find /var/log/ -type f -delete
+ENV APP_NAME=$APP_NAME
+ENV TZ=Asia/Tokyo
+ENV FRANKENPHP_CONFIG="worker /var/www/${APP_NAME}/run.php"
 
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-COPY docker/app/files /
-
-RUN mkdir -p /run/nginx \
- && mkdir -p /var/www/$APP_NAME
+COPY --from=kirameki /etc/profile.d /etc/profile.d
 
 WORKDIR /var/www/$APP_NAME
 
-ENTRYPOINT ["/etc/docker/entrypoint.sh"]
+RUN set -e \
+    && apk add --no-cache bash coreutils git icu-libs libstdc++ libxml2 tzdata \
+    && apk add --no-cache --virtual=.build-deps autoconf g++ icu-dev make \
+    && install-php-extensions bcmath intl pcntl pdo_mysql \
+    && pecl install apcu \
+    && pecl install ast \
+    && pecl install igbinary \
+    && pecl install pcov \
+    && pecl install redis \
+    && apk del .build-deps \
+    && mkdir -p /src
 
-CMD ["supervisord", "--nodaemon"]
+COPY --from=kirameki /usr/local/etc/php/ /usr/local/etc/php/
