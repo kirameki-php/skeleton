@@ -6,7 +6,7 @@ build:
 
 .PHONY: up
 up:
-	$(DOCKER_COMPOSE_COMMAND) up
+	$(DOCKER_COMPOSE_COMMAND) up --detach --remove-orphans
 
 .PHONY: down
 down:
@@ -31,3 +31,6 @@ clean:
 .PHONY: mysql
 mysql:
 	$(DOCKER_COMPOSE_COMMAND) exec mysql mysql
+
+logs:
+	$(DOCKER_COMPOSE_COMMAND) logs -f app

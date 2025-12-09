@@ -11,7 +11,6 @@ use Kirameki\Storage\Path;
 use Kirameki\System\Env;
 use function dirname;
 use function chdir;
-use function dump;
 use function microtime;
 
 final readonly class Program
@@ -48,9 +47,11 @@ final readonly class Program
     /**
      * @param array<string, mixed> $server
      */
-    public function handle(array $server): void
+    public function handle(array $server): string
     {
         $this->app->startScope();
+
+        return 'test';
     }
 
     /**
