@@ -46,19 +46,25 @@ final readonly class Program
 
     /**
      * @param array<string, mixed> $server
+     * @return void
      */
-    public function handle(array $server): string
+    public function handle(array $server): void
     {
-        $this->app->startScope();
-
-        return 'test';
+        try {
+            $this->app->startScope();
+            echo 'test';
+        } catch (\Throwable $exception) {
+            echo $exception;
+        }
+        finally {
+            $this->afterHandled(false);
+        }
     }
 
     /**
-     * @param bool $keepRunning
      * @return void
      */
-    public function afterHandled(bool $keepRunning): void
+    public function afterHandled(): void
     {
         $this->app->endScope();
     }
