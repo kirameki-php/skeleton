@@ -1,6 +1,6 @@
 FROM composer AS composer
 FROM toyama4649/kirameki-php-cli:latest AS kirameki
-FROM dunglas/frankenphp:1-php8.4-alpine
+FROM dunglas/frankenphp:1-php8.5-alpine
 
 ARG APP_NAME
 ENV APP_NAME=$APP_NAME

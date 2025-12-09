@@ -51,20 +51,28 @@ final readonly class Program
     public function handle(array $server): void
     {
         try {
-            $this->app->startScope();
+            $this->handleStarting();
             echo 'test';
         } catch (\Throwable $exception) {
             echo $exception;
         }
         finally {
-            $this->afterHandled(false);
+            $this->handleEnded();
         }
     }
 
     /**
      * @return void
      */
-    public function afterHandled(): void
+    public function handleStarting(): void
+    {
+        $this->app->startScope();
+    }
+
+    /**
+     * @return void
+     */
+    public function handleEnded(): void
     {
         $this->app->endScope();
     }

@@ -2,7 +2,7 @@
     "name": "kirameki/skeleton",
     "type": "project",
     "require": {
-        "php": ">=8.4",
+        "php": ">=8.5",
         "ext-apcu": "*",
         "ext-json": "*",
         "ext-pcntl": "*",

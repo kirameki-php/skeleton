@@ -7,6 +7,7 @@ use App\Framework\LifeCycle\AppScope;
 use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
+use RuntimeException;
 
 class App
 {
@@ -70,6 +71,10 @@ class App
      */
     public function endScope(): void
     {
+        if ($this->currentScope === null) {
+            throw new RuntimeException('No active scope to end.');
+        }
+
         $this->container->unsetScopedEntries();
         $this->currentScope = null;
     }
