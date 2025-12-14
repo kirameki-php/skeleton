@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\LifeCycle;
+namespace App\Framework\Foundation;
 
 use App\Framework\App;
 

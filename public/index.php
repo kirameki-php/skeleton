@@ -1,17 +1,22 @@
 <?php
 
-use App\Program;
+use App\Framework\App;
+use Kirameki\Storage\Path;
 
 ignore_user_abort(true);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-$program = new Program();
+$path = Path::of(dirname(__DIR__));
+chdir($path->toString());
 
-$handler = static fn() => $program->handle($_SERVER);
+$app = new App($path);
 
-$program->boot();
+$app->boot();
+
+$handler = static fn() => $app->handle($_SERVER);
 while (frankenphp_handle_request($handler)) {
     gc_collect_cycles();
 }
-$program->shutdown();
+
+$app->terminate();

@@ -31,7 +31,9 @@ class Router
             throw new RuntimeException('No matching route found.');
         }
 
-        return $route->run($this->container, $request);
+        $this->container->scoped(Route::class, fn() => $route);
+
+        return $route->run($this->container, $request, []);
     }
 
     /**

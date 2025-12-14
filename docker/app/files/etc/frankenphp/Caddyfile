@@ -8,8 +8,8 @@
     php_server {
        root public
        worker {
-          file public/index.php
-          watch public/index.php
+          file index.php
+          watch index.php
           watch src/**/*.php
       }
     }

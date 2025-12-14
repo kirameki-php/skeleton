@@ -9,6 +9,7 @@
         "ext-pdo": "*",
         "ext-posix": "*",
         "kirameki/container": "dev-main",
+        "kirameki/exception": "dev-main",
         "kirameki/utils": "dev-main",
         "monolog/monolog": "^3.4"
     },
