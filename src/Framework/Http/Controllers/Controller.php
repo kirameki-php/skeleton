@@ -5,7 +5,7 @@ namespace App\Framework\Http\Controllers;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;
 
-interface Controller
+abstract class Controller
 {
-    function handle(HttpRequest $request): HttpResponse;
+    public abstract function handle(HttpRequest $request): HttpResponse;
 }

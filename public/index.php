@@ -14,7 +14,7 @@ $app = new App($path);
 
 $app->boot();
 
-$handler = static fn() => $app->handle($_SERVER);
+$handler = static fn() => $app->handleHttp($_SERVER);
 while (frankenphp_handle_request($handler)) {
     gc_collect_cycles();
 }

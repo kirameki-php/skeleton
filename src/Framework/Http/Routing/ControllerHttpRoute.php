@@ -2,25 +2,24 @@
 
 namespace App\Framework\Http\Routing;
 
+use App\Framework\Http\Controllers\Controller;
+use App\Framework\Http\HttpContext;
 use Closure;
-use Kirameki\Container\Container;
 use Kirameki\Http\HttpMethod;
-use Kirameki\Http\HttpRequest;
-use Kirameki\Http\HttpResponse;
 use Kirameki\Storage\Path;
 use Override;
 
-class CallbackRoute extends Route
+class ControllerHttpRoute extends HttpRoute
 {
     /**
      * @param HttpMethod $method
      * @param Path $path
-     * @param Closure(HttpRequest): HttpResponse $handler
+     * @param class-string<Controller> $controller
      */
     public function __construct(
         HttpMethod $method,
         Path $path,
-        public readonly Closure $handler,
+        public readonly string $controller,
     ) {
         parent::__construct($method, $path);
     }
@@ -29,8 +28,9 @@ class CallbackRoute extends Route
      * @inheritDoc
      */
     #[Override]
-    protected function resolve(Container $container): Closure
+    protected function resolve(HttpContext $context): Closure
     {
-        return $this->handler;
+        $controller = $context->container->make($this->controller);
+        return $controller->handle(...);
     }
 }

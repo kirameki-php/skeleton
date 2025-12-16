@@ -4,18 +4,20 @@ namespace App\Framework;
 
 use App\Framework\Foundation\AppEnv;
 use App\Framework\Foundation\AppLifeCycle;
-use App\Framework\Foundation\AppRunner;
 use App\Framework\Foundation\AppScope;
 use App\Framework\Foundation\Deployment;
 use App\Framework\Foundation\Initializers\ExceptionInitializer;
 use App\Framework\Foundation\Initializers\LoggerInitializer;
 use App\Framework\Foundation\ServiceInitializer;
+use App\Framework\Http\HttpInitializer;
+use App\Framework\Http\HttpRunner;
+use Closure;
 use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
+use Kirameki\Event\EventDispatcher;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
-use RuntimeException;
 
 class App
 {
@@ -30,12 +32,8 @@ class App
     protected array $initializers = [
         LoggerInitializer::class,
         ExceptionInitializer::class,
+        HttpInitializer::class,
     ];
-
-    /**
-     * @var AppScope|null
-     */
-    protected ?AppScope $currentScope = null;
 
     /**
      * @var list<AppLifeCycle>
@@ -87,15 +85,11 @@ class App
      * @param array<string, string> $server
      * @return void
      */
-    public function handle(array $server): void
+    public function handleHttp(array $server): void
     {
-        try {
-            $this->startScope();
-            $this->container->make(AppRunner::class)->run();
-        }
-        finally {
-            $this->endScope();
-        }
+        $this->withScope(function () use ($server): void {
+            $this->container->make(HttpRunner::class)->run($server);
+        });
     }
 
     /**
@@ -108,23 +102,18 @@ class App
     }
 
     /**
+     * @param Closure(): mixed $call
      * @return void
      */
-    protected function startScope(): void
+    protected function withScope(Closure $call): void
     {
-        $this->currentScope = new AppScope();
-    }
-
-    /**
-     * @return void
-     */
-    protected function endScope(): void
-    {
-        if ($this->currentScope === null) {
-            throw new RuntimeException('No active scope to end.');
+        $scope = new AppScope();
+        try {
+            $this->container->scoped(AppScope::class, fn() => $scope);
+            $call();
+        } finally {
+            $this->container->unsetScopedEntries();
         }
-        $this->container->unsetScopedEntries();
-        $this->currentScope = null;
     }
 
     /**
@@ -133,11 +122,12 @@ class App
     protected function injectEssentialServices(): void
     {
         $container = $this->container;
-        $container->instance(App::class, $this);
         $container->instance(Container::class, $container);
-        $container->instance(ClockInterface::class, new SystemClock());
+        $container->instance(App::class, $this);
         $container->instance(AppEnv::class, $this->makeAppEnv(...));
         $container->instance(Deployment::class, $this->makeDeployment(...));
+        $container->instance(ClockInterface::class, new SystemClock());
+        $container->instance(EventDispatcher::class, new EventDispatcher());
     }
 
     /**

@@ -4,10 +4,15 @@ namespace App\Framework\Foundation;
 
 interface AppRunner
 {
-    function run(): void;
+    /**
+     * @param array<string, mixed> $server
+     * @return void
+     */
+    function run(array $server): void;
 
     /**
      * Called when the application is terminating.
+     * @return void
      */
     function terminate(): void;
 }
