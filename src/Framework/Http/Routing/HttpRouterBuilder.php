@@ -1,16 +1,16 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Http\Routing;
+namespace Kirameki\Framework\Http\Routing;
 
-use App\Framework\Http\Controllers\Controller;
-use App\Framework\Http\Filters\ExceptionFilter;
-use App\Framework\Http\Filters\RouteFilter;
 use Closure;
+use Kirameki\Framework\Http\Controllers\Controller;
+use Kirameki\Framework\Http\Filters\DefaultExceptionFilter;
+use Kirameki\Framework\Http\Filters\ExceptionFilter;
+use Kirameki\Framework\Http\Filters\RouteFilter;
 use Kirameki\Container\Container;
 use Kirameki\Http\HttpMethod;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;
-use Kirameki\Storage\Path;
 
 class HttpRouterBuilder
 {
@@ -33,11 +33,11 @@ class HttpRouterBuilder
 
     /**
      * @param HttpMethod $method
-     * @param Path $path
+     * @param string $path
      * @param class-string<Controller>|Closure(HttpRequest): HttpResponse $controller
      * @return $this
      */
-    public function addRoute(HttpMethod $method, Path $path, string|Closure $controller): static
+    public function addRoute(HttpMethod $method, string $path, string|Closure $controller): static
     {
         $this->routes[] = ($controller instanceof Closure)
             ? new CallbackHttpRoute($method, $path, $controller)
@@ -73,7 +73,7 @@ class HttpRouterBuilder
         return new HttpRouter(
             $this->container,
             $this->routes,
-            $this->exceptionFilter,
+            $this->exceptionFilter ?? new DefaultExceptionFilter(),
             $this->routeFilters,
         );
     }

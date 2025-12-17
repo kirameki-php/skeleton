@@ -1,23 +1,22 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Http\Routing;
+namespace Kirameki\Framework\Http\Routing;
 
-use App\Framework\Http\Filters\RouteFilter;
-use App\Framework\Http\HttpContext;
 use Closure;
+use Kirameki\Framework\Http\Filters\RouteFilter;
+use Kirameki\Framework\Http\HttpContext;
 use Kirameki\Http\HttpMethod;
 use Kirameki\Http\HttpResponse;
-use Kirameki\Storage\Path;
 
 abstract class HttpRoute
 {
     /**
      * @param HttpMethod $method
-     * @param Path $path
+     * @param string $path
      */
     public function __construct(
         public readonly HttpMethod $method,
-        public readonly Path $path,
+        public readonly string $path,
     ) {
     }
 
@@ -44,19 +43,8 @@ abstract class HttpRoute
      */
     protected function pipeline(HttpContext $context, array $filters, int $index): HttpResponse
     {
-        return $filters[$index]($context, $this->generateNextCaller($context, $filters, $index));
-    }
-
-    /**
-     * @param HttpContext $context
-     * @param list<RouteFilter> $filters
-     * @param int $index
-     * @return Closure(): HttpResponse
-     */
-    protected function generateNextCaller(HttpContext $context, array $filters, int $index): Closure
-    {
-        return fn() => ($filters[$index + 1] ?? false)
-            ? $this->pipeline($context, $filters, $index + 1)
+        return ($filters[$index] ?? false)
+            ? $filters[$index]($context, fn() => $this->pipeline($context, $filters, $index + 1))
             : $this->resolve($context)($context);
     }
 }

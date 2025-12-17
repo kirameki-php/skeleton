@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Http\Events;
+namespace Kirameki\Framework\Http\Events;
 
 use Kirameki\Event\Event;
 use Kirameki\Http\HttpRequest;

@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Http\Routing;
+namespace Kirameki\Framework\Http\Routing;
 
-use App\Framework\Http\Filters\ExceptionFilter;
-use App\Framework\Http\Filters\RouteFilter;
-use App\Framework\Http\HttpContext;
+use Kirameki\Framework\Http\Filters\ExceptionFilter;
+use Kirameki\Framework\Http\Filters\RouteFilter;
+use Kirameki\Framework\Http\HttpContext;
 use Kirameki\Container\Container;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;

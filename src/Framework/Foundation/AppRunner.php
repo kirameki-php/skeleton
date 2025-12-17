@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Foundation;
+namespace Kirameki\Framework\Foundation;
 
 interface AppRunner
 {

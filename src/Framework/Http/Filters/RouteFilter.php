@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Http\Filters;
+namespace Kirameki\Framework\Http\Filters;
 
-use App\Framework\Http\HttpContext;
+use Kirameki\Framework\Http\HttpContext;
 use Closure;
 use Kirameki\Http\HttpResponse;
 

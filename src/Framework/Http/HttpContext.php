@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Http;
+namespace Kirameki\Framework\Http;
 
-use App\Framework\Http\Routing\HttpRoute;
+use Kirameki\Framework\Http\Routing\HttpRoute;
 use Kirameki\Container\Container;
 use Kirameki\Http\HttpRequest;
 

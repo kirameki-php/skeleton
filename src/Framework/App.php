@@ -1,26 +1,30 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework;
+namespace Kirameki\Framework;
 
-use App\Framework\Foundation\AppEnv;
-use App\Framework\Foundation\AppLifeCycle;
-use App\Framework\Foundation\AppScope;
-use App\Framework\Foundation\Deployment;
-use App\Framework\Foundation\Initializers\ExceptionInitializer;
-use App\Framework\Foundation\Initializers\LoggerInitializer;
-use App\Framework\Foundation\ServiceInitializer;
-use App\Framework\Http\HttpInitializer;
-use App\Framework\Http\HttpRunner;
 use Closure;
 use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
 use Kirameki\Event\EventDispatcher;
+use Kirameki\Framework\Foundation\AppEnv;
+use Kirameki\Framework\Foundation\AppLifeCycle;
+use Kirameki\Framework\Foundation\AppScope;
+use Kirameki\Framework\Foundation\AppState;
+use Kirameki\Framework\Foundation\Deployment;
+use Kirameki\Framework\Foundation\Initializers\ExceptionInitializer;
+use Kirameki\Framework\Foundation\Initializers\LoggerInitializer;
+use Kirameki\Framework\Foundation\ServiceInitializer;
+use Kirameki\Framework\Http\HttpRunner;
+use Kirameki\Framework\Http\Initializers\HttpInitializer;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
+use function file_put_contents;
 
 class App
 {
+    public AppState $state;
+
     /**
      * @var Container
      */
@@ -52,19 +56,24 @@ class App
     {
         $this->container = new Container();
         $this->startTimeSeconds = microtime(true);
+        $this->state = AppState::Constructed;
     }
 
     /**
+     * @param array<class-string<ServiceInitializer>> $initializers
      * @return void
      */
-    public function boot(): void
+    public function boot(array $initializers): void
     {
+        $this->state = AppState::Booting;
         $this->injectEssentialServices();
-        $this->runInitializers();
+        $this->runInitializers($initializers);
 
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->started($this);
         }
+
+        file_put_contents('/run/.kirameki', '1');
     }
 
     /**
@@ -72,6 +81,8 @@ class App
      */
     public function terminate(): void
     {
+        $this->state = AppState::Terminating;
+
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->terminating($this);
         }
@@ -79,6 +90,8 @@ class App
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->terminated($this);
         }
+
+        $this->state = AppState::Terminated;
     }
 
     /**
@@ -87,6 +100,8 @@ class App
      */
     public function handleHttp(array $server): void
     {
+        $this->state = AppState::Running;
+
         $this->withScope(function () use ($server): void {
             $this->container->make(HttpRunner::class)->run($server);
         });
@@ -131,12 +146,18 @@ class App
     }
 
     /**
+     * @param array<class-string<ServiceInitializer>> $userInitializers
      * @return void
      */
-    protected function runInitializers(): void
+    protected function runInitializers(array $userInitializers): void
     {
         $container = $this->container;
+
         foreach ($this->initializers as $initializer) {
+            $container->make($initializer)->register($container);
+        }
+
+        foreach ($userInitializers as $initializer) {
             $container->make($initializer)->register($container);
         }
     }

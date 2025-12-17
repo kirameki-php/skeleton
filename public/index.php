@@ -1,6 +1,7 @@
 <?php
 
-use App\Framework\App;
+use Kirameki\App\Initializers\RoutesInitializer;
+use Kirameki\Framework\App;
 use Kirameki\Storage\Path;
 
 ignore_user_abort(true);
@@ -12,7 +13,9 @@ chdir($path->toString());
 
 $app = new App($path);
 
-$app->boot();
+$app->boot([
+    RoutesInitializer::class,
+]);
 
 $handler = static fn() => $app->handleHttp($_SERVER);
 while (frankenphp_handle_request($handler)) {

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Foundation\Initializers;
+namespace Kirameki\Framework\Foundation\Initializers;
 
-use App\Framework\Foundation\ServiceInitializer;
+use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Container\Container;
 use Kirameki\Exception\ExceptionHandler;
 use Kirameki\Exception\Reporters\LogReporter;

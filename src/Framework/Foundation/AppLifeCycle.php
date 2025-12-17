@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Foundation;
+namespace Kirameki\Framework\Foundation;
 
-use App\Framework\App;
+use Kirameki\Framework\App;
 
 interface AppLifeCycle
 {

@@ -1,12 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace App\Framework\Http;
+namespace Kirameki\Framework\Http;
 
-use App\Framework\Foundation\AppRunner;
-use App\Framework\Http\Events\RequestReceived;
-use App\Framework\Http\Events\ResponseSent;
-use App\Framework\Http\Routing\HttpRouter;
+use Kirameki\Framework\Foundation\AppRunner;
+use Kirameki\Framework\Http\Events\RequestReceived;
+use Kirameki\Framework\Http\Events\ResponseSent;
+use Kirameki\Framework\Http\Routing\HttpRouter;
 use Kirameki\Event\EventDispatcher;
+use Kirameki\Http\HttpMethod;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpRequestBody;
 use Kirameki\Http\HttpRequestHeaders;
@@ -57,11 +58,14 @@ class HttpRunner implements AppRunner
      */
     protected function buildRequestFromEnvs(): HttpRequest
     {
-        $method = $_REQUEST['_method'] ?? $_SERVER['REQUEST_METHOD'];
+        $method = HttpMethod::from($_REQUEST['_method'] ?? $_SERVER['REQUEST_METHOD']);
         $version = (float) str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1');
         $urlString = ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $_SERVER['REQUEST_SCHEME'] ?? 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
         $url = Url::parse($urlString);
-        $headers = new HttpRequestHeaders(getallheaders());
+        $headers = new HttpRequestHeaders();
+        foreach (getallheaders() as $name => $value) {
+            $headers->add($name, $value);
+        }
         $body = new HttpRequestBody(file_get_contents('php://input'));
         return new HttpRequest($method, $version, $url, $headers, $body);
     }
