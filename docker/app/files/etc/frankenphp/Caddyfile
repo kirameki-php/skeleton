@@ -6,11 +6,12 @@
     encode zstd br gzip
 
     php_server {
-       root public
-       worker {
-          file index.php
-          watch index.php
-          watch src/**/*.php
-      }
+        file_server off
+        root public
+        worker {
+            file index.php
+            watch index.php
+            watch src/**/*.php
+        }
     }
 }
