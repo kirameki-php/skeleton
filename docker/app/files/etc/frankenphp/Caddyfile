@@ -5,13 +5,10 @@
 :80 {
     encode zstd br gzip
 
-    php_server {
-        file_server off
-        root public
-        worker {
-            file index.php
-            watch index.php
-            watch src/**/*.php
+    php {
+        worker worker.php {
+            match *
+            watch
         }
     }
 }

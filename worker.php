@@ -6,9 +6,9 @@ use Kirameki\Storage\Path;
 
 ignore_user_abort(true);
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
-$path = Path::of(dirname(__DIR__));
+$path = Path::of(__DIR__);
 chdir($path->toString());
 
 $app = new App($path);

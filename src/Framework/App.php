@@ -19,11 +19,12 @@ use Kirameki\Framework\Http\HttpRunner;
 use Kirameki\Framework\Http\Initializers\HttpInitializer;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
+use function array_map;
 use function file_put_contents;
 
 class App
 {
-    public AppState $state;
+    public AppState $state = AppState::Constructed;
 
     /**
      * @var Container
@@ -56,7 +57,6 @@ class App
     {
         $this->container = new Container();
         $this->startTimeSeconds = microtime(true);
-        $this->state = AppState::Constructed;
     }
 
     /**
@@ -66,14 +66,13 @@ class App
     public function boot(array $initializers): void
     {
         $this->state = AppState::Booting;
+
         $this->injectEssentialServices();
         $this->runInitializers($initializers);
 
-        foreach ($this->lifeCycles as $lifeCycle) {
-            $lifeCycle->started($this);
-        }
+        array_map(fn(AppLifeCycle $lc) => $lc->started($this), $this->lifeCycles);
 
-        file_put_contents('/run/.kirameki', '1');
+        $this->markAsReady();
     }
 
     /**
@@ -83,13 +82,8 @@ class App
     {
         $this->state = AppState::Terminating;
 
-        foreach ($this->lifeCycles as $lifeCycle) {
-            $lifeCycle->terminating($this);
-        }
-
-        foreach ($this->lifeCycles as $lifeCycle) {
-            $lifeCycle->terminated($this);
-        }
+        array_map(fn(AppLifeCycle $lc) => $lc->terminating($this), $this->lifeCycles);
+        array_map(fn(AppLifeCycle $lc) => $lc->terminated($this), $this->lifeCycles);
 
         $this->state = AppState::Terminated;
     }
@@ -100,11 +94,9 @@ class App
      */
     public function handleHttp(array $server): void
     {
-        $this->state = AppState::Running;
-
-        $this->withScope(function () use ($server): void {
-            $this->container->make(HttpRunner::class)->run($server);
-        });
+        $this->withScope(
+            fn(AppScope $scope) => $this->container->make(HttpRunner::class)->run($scope, $server),
+        );
     }
 
     /**
@@ -117,15 +109,14 @@ class App
     }
 
     /**
-     * @param Closure(): mixed $call
+     * @param Closure(AppScope): mixed $call
      * @return void
      */
     protected function withScope(Closure $call): void
     {
-        $scope = new AppScope();
         try {
-            $this->container->scoped(AppScope::class, fn() => $scope);
-            $call();
+            $scope = $this->container->get(AppScope::class);
+            $call($scope);
         } finally {
             $this->container->unsetScopedEntries();
         }
@@ -143,6 +134,7 @@ class App
         $container->instance(Deployment::class, $this->makeDeployment(...));
         $container->instance(ClockInterface::class, new SystemClock());
         $container->instance(EventDispatcher::class, new EventDispatcher());
+        $container->scoped(AppScope::class, fn() => new AppScope());
     }
 
     /**
@@ -160,6 +152,16 @@ class App
         foreach ($userInitializers as $initializer) {
             $container->make($initializer)->register($container);
         }
+    }
+
+    /**
+     * @return void
+     */
+    protected function markAsReady(): void
+    {
+        file_put_contents('/run/.kirameki', '1');
+
+        $this->state = AppState::Running;
     }
 
     /**

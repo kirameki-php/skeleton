@@ -3,6 +3,7 @@
 namespace Kirameki\Framework\Http;
 
 use Kirameki\Framework\Foundation\AppRunner;
+use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Http\Events\RequestReceived;
 use Kirameki\Framework\Http\Events\ResponseSent;
 use Kirameki\Framework\Http\Routing\HttpRouter;
@@ -32,15 +33,16 @@ class HttpRunner implements AppRunner
     }
 
     /**
+     * @param AppScope $scope
      * @param array<string, mixed> $server
      * @return void
      */
-    function run(array $server): void
+    function run(AppScope $scope, array $server): void
     {
         $request = $this->buildRequestFromEnvs();
         $this->events->emit(new RequestReceived($request));
         $then = hrtime(true);
-        $response = $this->router->dispatch($request);
+        $response = $this->router->dispatch($scope, $request);
         $this->sendResponse($response);
         $elapsedSeconds = (hrtime(true) - $then) / 1_000_000_000;
         $this->events->emit(new ResponseSent($request, $response, $elapsedSeconds));

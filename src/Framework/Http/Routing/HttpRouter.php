@@ -2,6 +2,7 @@
 
 namespace Kirameki\Framework\Http\Routing;
 
+use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Http\Filters\ExceptionFilter;
 use Kirameki\Framework\Http\Filters\RouteFilter;
 use Kirameki\Framework\Http\HttpContext;
@@ -27,17 +28,18 @@ class HttpRouter
     }
 
     /**
+     * @param AppScope $scope
      * @param HttpRequest $request
      * @return HttpResponse
      */
-    public function dispatch(HttpRequest $request): HttpResponse
+    public function dispatch(AppScope $scope, HttpRequest $request): HttpResponse
     {
         $route = $this->findMatchingRoute($request);
         if ($route === null) {
             return new HttpResponse($request->version, 404);
         }
 
-        $context = new HttpContext($this->container, $request, $route);
+        $context = new HttpContext($this->container, $scope, $request, $route);
 
         try {
             return $route->run($context, $this->routeFilters);
