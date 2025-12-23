@@ -35,4 +35,13 @@ class ControllerHttpRoute extends HttpRoute
         ]);
         return $controller->handle(...);
     }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function filters(HttpContext $context): array
+    {
+        return [];
+    }
 }

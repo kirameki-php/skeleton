@@ -27,6 +27,12 @@ abstract class HttpRoute
 
     /**
      * @param HttpContext $context
+     * @return list<RouteFilter>
+     */
+    abstract protected function filters(HttpContext $context): array;
+
+    /**
+     * @param HttpContext $context
      * @param list<RouteFilter> $filters
      * @return HttpResponse
      */

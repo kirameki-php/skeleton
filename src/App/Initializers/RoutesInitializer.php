@@ -6,7 +6,6 @@ use Kirameki\Framework\Http\Controllers\Health\ReadinessController;
 use Kirameki\Framework\Http\Initializers\RoutesInitializerBase;
 use Kirameki\Framework\Http\Routing\HttpRouter;
 use Kirameki\Framework\Http\Routing\HttpRouterBuilder;
-use Kirameki\Http\HttpMethod;
 use Override;
 
 class RoutesInitializer extends RoutesInitializerBase
@@ -18,7 +17,9 @@ class RoutesInitializer extends RoutesInitializerBase
     protected function setupRoutes(HttpRouterBuilder $router): HttpRouter
     {
         return $router
-            ->addRoute(HttpMethod::GET, '/readyz', ReadinessController::class)
+            ->get('/readyz', ReadinessController::class)
+            ->get('/users/{id|int}', ReadinessController::class)
+            ->get('/users/{id}', ReadinessController::class)
             ->build();
     }
 }

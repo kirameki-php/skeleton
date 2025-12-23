@@ -1,12 +1,16 @@
 <?php
 
 use Kirameki\App\Initializers\RoutesInitializer;
+use Kirameki\Dumper\Config;
+use Kirameki\Dumper\Dumper;
 use Kirameki\Framework\App;
 use Kirameki\Storage\Path;
 
 ignore_user_abort(true);
 
 require __DIR__ . '/vendor/autoload.php';
+
+Dumper::setInstance(new Dumper(new Config(decorator: 'cli')));
 
 $path = Path::of(__DIR__);
 chdir($path->toString());

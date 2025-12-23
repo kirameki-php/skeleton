@@ -10,18 +10,19 @@ use Kirameki\Container\Container;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;
 use Throwable;
+use function dump;
 
 class HttpRouter
 {
     /**
      * @param Container $container
-     * @param list<HttpRoute> $routes
+     * @param array<string, HttpRouteTree> $trees
      * @param ExceptionFilter $exceptionFilter
      * @param list<RouteFilter> $routeFilters
      */
     public function __construct(
         protected Container $container,
-        protected array $routes,
+        protected array $trees,
         protected ExceptionFilter $exceptionFilter,
         protected array $routeFilters = [],
     ) {
@@ -34,7 +35,8 @@ class HttpRouter
      */
     public function dispatch(AppScope $scope, HttpRequest $request): HttpResponse
     {
-        $route = $this->findMatchingRoute($request);
+        $route = $this->findRoute($request);
+        dump($route);
         if ($route === null) {
             return new HttpResponse($request->version, 404);
         }
@@ -49,15 +51,10 @@ class HttpRouter
         }
     }
 
-    /**
-     * @param HttpRequest $request
-     * @return HttpRoute|null
-     */
-    protected function findMatchingRoute(HttpRequest $request): ?HttpRoute
+    protected function findRoute(HttpRequest $request): ?HttpRoute
     {
-        foreach ($this->routes as $route) {
-            return $route;
-        }
-        return null;
+        $method = $request->method->value;
+        $tree = $this->trees[$method] ?? null;
+        return $tree?->find($request);
     }
 }

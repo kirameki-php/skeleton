@@ -118,7 +118,7 @@ class App
             $scope = $this->container->get(AppScope::class);
             $call($scope);
         } finally {
-            $this->container->unsetScopedEntries();
+            $this->container->unsetScopedInstances();
         }
     }
 

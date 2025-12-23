@@ -11,13 +11,13 @@ class HttpContext
 {
     /**
      * @param Container $container
-     * @param AppScope $appScope
+     * @param AppScope $scope
      * @param HttpRequest $request
      * @param HttpRoute $route
      */
     public function __construct(
         public readonly Container $container,
-        public readonly AppScope $appScope,
+        public readonly AppScope $scope,
         public readonly HttpRequest $request,
         public readonly HttpRoute $route,
     ) {

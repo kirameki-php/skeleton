@@ -32,4 +32,13 @@ class CallbackHttpRoute extends HttpRoute
     {
         return $this->handler;
     }
+
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function filters(HttpContext $context): array
+    {
+        return [];
+    }
 }
