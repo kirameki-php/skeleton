@@ -36,7 +36,6 @@ class HttpRouter
     public function dispatch(AppScope $scope, HttpRequest $request): HttpResponse
     {
         $route = $this->findRoute($request);
-        dump($route);
         if ($route === null) {
             return new HttpResponse($request->version, 404);
         }
