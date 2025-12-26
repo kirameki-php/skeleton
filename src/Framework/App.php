@@ -3,6 +3,7 @@
 namespace Kirameki\Framework;
 
 use Closure;
+use Kirameki\App\Initializers\LoggerInitializer;
 use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
@@ -14,14 +15,12 @@ use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Foundation\AppState;
 use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\Initializers\ExceptionInitializer;
-use Kirameki\Framework\Foundation\Initializers\LoggerInitializer;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Http\HealthCheck;
 use Kirameki\Framework\Http\HttpRunner;
 use Kirameki\Framework\Http\Initializers\HttpInitializer;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
-use function array_map;
 use function touch;
 
 class App
@@ -78,12 +77,12 @@ class App
         $this->state = AppState::Booting;
 
         $this->injectEssentialServices();
-
-        $this->threadId = $this->generateThreadId();
-
+        $this->generateThreadId();
         $this->runInitializers($initializers);
 
-        array_map(fn(AppLifeCycle $lc) => $lc->started($this), $this->lifeCycles);
+        foreach ($this->lifeCycles as $lifeCycle) {
+            $lifeCycle->started($this);
+        }
 
         $this->markAsReady();
     }
@@ -95,8 +94,13 @@ class App
     {
         $this->state = AppState::Terminating;
 
-        array_map(fn(AppLifeCycle $lc) => $lc->terminating($this), $this->lifeCycles);
-        array_map(fn(AppLifeCycle $lc) => $lc->terminated($this), $this->lifeCycles);
+        foreach ($this->lifeCycles as $lifeCycle) {
+            $lifeCycle->terminating($this);
+        }
+
+        foreach ($this->lifeCycles as $lifeCycle) {
+            $lifeCycle->terminated($this);
+        }
 
         $this->state = AppState::Terminated;
     }
@@ -107,9 +111,8 @@ class App
      */
     public function handleHttp(array $server): void
     {
-        $this->withScope(
-            fn(AppScope $scope) => $this->container->make(HttpRunner::class)->run($scope, $server),
-        );
+        $httpRunner = $this->container->make(HttpRunner::class);
+        $this->withScope(static fn(AppScope $scope) => $httpRunner->run($scope, $server));
     }
 
     /**
@@ -128,8 +131,7 @@ class App
     protected function withScope(Closure $call): void
     {
         try {
-            $scope = $this->container->get(AppScope::class);
-            $call($scope);
+            $call($this->container->get(AppScope::class));
         } finally {
             $this->container->unsetScopedInstances();
         }
@@ -152,6 +154,14 @@ class App
     }
 
     /**
+     * @return void
+     */
+    protected function generateThreadId(): void
+    {
+        $this->threadId = $this->container->get(NanoIdGenerator::class)->generate();
+    }
+
+    /**
      * @param array<class-string<ServiceInitializer>> $userInitializers
      * @return void
      */
@@ -168,12 +178,11 @@ class App
         }
     }
 
-    /**
-     * @return string
-     */
-    protected function generateThreadId(): string
+    protected function invokeLifeCycleStartedMethods(): void
     {
-        return $this->container->get(NanoIdGenerator::class)->generate();
+        foreach ($this->lifeCycles as $lifeCycle) {
+            $lifeCycle->started($this);
+        }
     }
 
     /**

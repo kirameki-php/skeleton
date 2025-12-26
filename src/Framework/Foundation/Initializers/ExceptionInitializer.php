@@ -6,11 +6,16 @@ use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Container\Container;
 use Kirameki\Exception\ExceptionHandler;
 use Kirameki\Exception\Reporters\LogReporter;
+use Override;
 use Psr\Log\LoggerInterface;
 
-class ExceptionInitializer implements ServiceInitializer
+class ExceptionInitializer extends ServiceInitializer
 {
-    function register(Container $container): void
+    /**
+     * @inheritDoc
+     */
+    #[Override]
+    protected function register(Container $container): void
     {
         $container->singleton(ExceptionHandler::class, function () use ($container) {
             $logger = $container->get(LoggerInterface::class);

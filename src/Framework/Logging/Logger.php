@@ -2,19 +2,18 @@
 
 namespace Kirameki\Framework\Logging;
 
-use Kirameki\Framework\Logging\Handlers\Handler;
+use Kirameki\Framework\Logging\Writers\LogWriter;
 use Override;
-use Psr\Log\LoggerInterface;
 use Stringable;
 use function microtime;
 
-class Logger implements LoggerInterface
+class Logger
 {
     /**
-     * @param list<Handler> $handlers
+     * @param array<string, LogWriter> $writers
      */
     public function __construct(
-        protected array $handlers = [],
+        protected array $writers = [],
     ) {
     }
 
@@ -24,7 +23,19 @@ class Logger implements LoggerInterface
      */
     public function isEnabled(LogLevel $level): bool
     {
-        return array_any($this->handlers, static fn(Handler $h) => $h->isEnabled($level));
+        return array_any($this->writers, static fn(LogWriter $w) => $w->isEnabled($level));
+    }
+
+    /**
+     * @param LogLevel $level
+     * @return $this
+     */
+    public function setLevel(LogLevel $level): static
+    {
+        foreach ($this->writers as $writer) {
+            $writer->setLevel($level);
+        }
+        return $this;
     }
 
     /**
@@ -33,11 +44,11 @@ class Logger implements LoggerInterface
      * @param array<string, mixed> $context
      */
     #[Override]
-    public function log($level, Stringable|string $message, array $context = []): void
+    public function log($level, string|Stringable $message, array $context = []): void
     {
         $time = microtime(true);
-        foreach ($this->handlers as $handler) {
-            $handler->handle(new LogRecord($level, (string) $message, $context, $time));
+        foreach ($this->writers as $writer) {
+            $writer->write(new LogRecord($level, (string) $message, $context, $time));
         }
     }
 

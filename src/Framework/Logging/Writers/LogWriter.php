@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Kirameki\Framework\Logging\Handlers;
+namespace Kirameki\Framework\Logging\Writers;
 
 use Kirameki\Framework\Logging\LogLevel;
 use Kirameki\Framework\Logging\LogRecord;
 
-abstract class Handler
+abstract class LogWriter
 {
     /**
      * @param LogLevel $level
@@ -25,22 +25,24 @@ abstract class Handler
     }
 
     /**
+     * @param LogLevel $level
+     * @return $this
+     */
+    public function setLevel(LogLevel $level): static
+    {
+        $this->level = $level;
+        return $this;
+    }
+
+    /**
      * @param LogRecord $record
      * @return void
      */
-    public function handle(LogRecord $record): void
+    public function write(LogRecord $record): void
     {
-        if (!$this->isEnabled($record->level)) {
-            return;
+        if ($this->isEnabled($record->level)) {
+            $this->handle($record);
         }
-
-        $this->modify($record);
-        $this->write($record);
-    }
-
-    protected function modify(LogRecord $record): void
-    {
-        // Override to modify the record before writing
     }
 
     /**
@@ -52,5 +54,5 @@ abstract class Handler
      * @param LogRecord $record
      * @return void
      */
-    abstract protected function write(LogRecord $record): void;
+    abstract protected function handle(LogRecord $record): void;
 }

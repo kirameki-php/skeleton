@@ -2,7 +2,6 @@
 
 namespace Kirameki\Framework\Http;
 
-use Kirameki\Framework\Foundation\AppRunner;
 use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Http\Events\RequestReceived;
 use Kirameki\Framework\Http\Events\ResponseSent;
@@ -20,7 +19,7 @@ use function getallheaders;
 use function hrtime;
 use function sprintf;
 
-class HttpRunner implements AppRunner
+class HttpRunner
 {
     /**
      * @param EventDispatcher $events
@@ -46,13 +45,6 @@ class HttpRunner implements AppRunner
         $this->sendResponse($response);
         $elapsedSeconds = (hrtime(true) - $then) / 1_000_000_000;
         $this->events->emit(new ResponseSent($request, $response, $elapsedSeconds));
-    }
-
-    /**
-     * @return void
-     */
-    function terminate(): void
-    {
     }
 
     /**

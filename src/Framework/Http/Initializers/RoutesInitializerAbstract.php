@@ -7,12 +7,12 @@ use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Http\Routing\HttpRouter;
 use Kirameki\Framework\Http\Routing\HttpRouterBuilder;
 
-abstract class RoutesInitializerBase implements ServiceInitializer
+abstract class RoutesInitializerAbstract extends ServiceInitializer
 {
     public function register(Container $container): void
     {
         $container->singleton(HttpRouter::class, function(Container $container) {
-            return $this->setupRoutes(new HttpRouterBuilder($container));
+            return $this->setup(new HttpRouterBuilder($container));
         });
     }
 
@@ -20,5 +20,5 @@ abstract class RoutesInitializerBase implements ServiceInitializer
      * @param HttpRouterBuilder $router
      * @return HttpRouter
      */
-    protected abstract function setupRoutes(HttpRouterBuilder $router): HttpRouter;
+    protected abstract function setup(HttpRouterBuilder $router): HttpRouter;
 }

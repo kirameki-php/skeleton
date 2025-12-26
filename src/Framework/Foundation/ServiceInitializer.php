@@ -3,8 +3,21 @@
 namespace Kirameki\Framework\Foundation;
 
 use Kirameki\Container\Container;
+use Kirameki\Framework\App;
 
-interface ServiceInitializer
+abstract class ServiceInitializer
 {
-    function register(Container $container): void;
+    /**
+     * @param App $app
+     */
+    public function __construct(
+        protected App $app,
+    ) {
+    }
+
+    /**
+     * @param Container $container
+     * @return void
+     */
+    abstract protected function register(Container $container): void;
 }

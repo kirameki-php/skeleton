@@ -1,11 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Kirameki\Framework\Logging\Handlers;
+namespace Kirameki\Framework\Logging\Writers;
 
 use Kirameki\Exceptions\RuntimeException;
 use Kirameki\Framework\Logging\Formatters\Formatter;
 use Kirameki\Framework\Logging\LogLevel;
 use Kirameki\Framework\Logging\LogRecord;
+use Override;
 use function chmod;
 use function fclose;
 use function flock;
@@ -15,7 +16,7 @@ use function is_resource;
 use const LOCK_EX;
 use const LOCK_UN;
 
-class StreamHandler extends Handler
+class StreamWriter extends LogWriter
 {
     /**
      * @var resource|null
@@ -53,7 +54,8 @@ class StreamHandler extends Handler
     /**
      * @inheritDoc
      */
-    protected function write(LogRecord $record): void
+    #[Override]
+    protected function handle(LogRecord $record): void
     {
         $stream = $this->openStreamOnce();
 
@@ -83,10 +85,12 @@ class StreamHandler extends Handler
      */
     protected function openStream(): mixed
     {
-        $stream = fopen($this->path, 'a') ?: throw new RuntimeException("Could not open stream {$this->path}");
+        $path = $this->path;
+
+        $stream = fopen($path, 'a') ?: throw new RuntimeException("Could not open stream {$path}");
 
         if ($this->filePermission !== null) {
-            chmod($this->path, $this->filePermission);
+            chmod($path, $this->filePermission);
         }
 
         return $this->stream = $stream;
