@@ -3,6 +3,7 @@
 namespace Kirameki\Framework\Http\Controllers\Health;
 
 use Kirameki\Framework\Http\Controllers\Controller;
+use Kirameki\Framework\Http\HealthCheck;
 use Kirameki\Http\HttpResponse;
 use Kirameki\Http\StatusCode;
 use Override;
@@ -16,7 +17,7 @@ class ReadinessController extends Controller
     #[Override]
     public function handle(): HttpResponse
     {
-        return file_exists('/run/.kirameki')
+        return file_exists(HealthCheck::READINESS_FILE)
             ? $this->response(StatusCode::OK)
             : $this->response(StatusCode::ServiceUnavailable);
     }

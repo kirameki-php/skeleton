@@ -24,10 +24,7 @@ class Logger implements LoggerInterface
      */
     public function isEnabled(LogLevel $level): bool
     {
-        return array_any(
-            $this->handlers,
-            static fn(Handler $handler) => $handler->isEnabled($level),
-        );
+        return array_any($this->handlers, static fn(Handler $h) => $h->isEnabled($level));
     }
 
     /**

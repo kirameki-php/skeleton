@@ -2,7 +2,6 @@
 
 namespace Kirameki\Framework\Logging\Handlers;
 
-use Kirameki\Framework\Logging\Formatters\Formatter;
 use Kirameki\Framework\Logging\LogLevel;
 use Kirameki\Framework\Logging\LogRecord;
 

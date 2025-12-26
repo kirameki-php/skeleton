@@ -60,11 +60,13 @@ class StreamHandler extends Handler
         if ($this->useLocking) {
             flock($stream, LOCK_EX);
         }
-
-        fwrite($stream, $this->formatter->format($record));
-
-        if ($this->useLocking) {
-            flock($stream, LOCK_UN);
+        try {
+            fwrite($stream, $this->formatter->format($record));
+        }
+        finally {
+            if ($this->useLocking) {
+                flock($stream, LOCK_UN);
+            }
         }
     }
 

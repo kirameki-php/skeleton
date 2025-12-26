@@ -7,6 +7,7 @@ use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
 use Kirameki\Event\EventDispatcher;
+use Kirameki\Framework\Crypto\NanoIdGenerator;
 use Kirameki\Framework\Foundation\AppEnv;
 use Kirameki\Framework\Foundation\AppLifeCycle;
 use Kirameki\Framework\Foundation\AppScope;
@@ -15,21 +16,30 @@ use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\Initializers\ExceptionInitializer;
 use Kirameki\Framework\Foundation\Initializers\LoggerInitializer;
 use Kirameki\Framework\Foundation\ServiceInitializer;
+use Kirameki\Framework\Http\HealthCheck;
 use Kirameki\Framework\Http\HttpRunner;
 use Kirameki\Framework\Http\Initializers\HttpInitializer;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
 use function array_map;
-use function file_put_contents;
+use function touch;
 
 class App
 {
+    /**
+     * @var AppState
+     */
     public AppState $state = AppState::Constructed;
 
     /**
      * @var Container
      */
     public readonly Container $container;
+
+    /**
+     * @var string
+     */
+    public string $threadId = '';
 
     /**
      * @var list<class-string<ServiceInitializer>>
@@ -68,6 +78,9 @@ class App
         $this->state = AppState::Booting;
 
         $this->injectEssentialServices();
+
+        $this->threadId = $this->generateThreadId();
+
         $this->runInitializers($initializers);
 
         array_map(fn(AppLifeCycle $lc) => $lc->started($this), $this->lifeCycles);
@@ -134,6 +147,7 @@ class App
         $container->instance(Deployment::class, $this->makeDeployment(...));
         $container->instance(ClockInterface::class, new SystemClock());
         $container->instance(EventDispatcher::class, new EventDispatcher());
+        $container->instance(NanoIdGenerator::class, new NanoIdGenerator());
         $container->scoped(AppScope::class, fn() => new AppScope());
     }
 
@@ -155,11 +169,19 @@ class App
     }
 
     /**
+     * @return string
+     */
+    protected function generateThreadId(): string
+    {
+        return $this->container->get(NanoIdGenerator::class)->generate();
+    }
+
+    /**
      * @return void
      */
     protected function markAsReady(): void
     {
-        file_put_contents('/run/.kirameki', '1');
+        touch(HealthCheck::READINESS_FILE);
 
         $this->state = AppState::Running;
     }
