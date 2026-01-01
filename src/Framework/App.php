@@ -23,16 +23,6 @@ use function touch;
 class App
 {
     /**
-     * @var AppState
-     */
-    public AppState $state = AppState::Constructed;
-
-    /**
-     * @var Container
-     */
-    public readonly Container $container;
-
-    /**
      * @var string
      */
     public string $threadId = '';
@@ -49,10 +39,14 @@ class App
 
     /**
      * @param Path $path
+     * @param Container $container
+     * @param AppState $state
      */
-    public function __construct(protected Path $path)
-    {
-        $this->container = new Container();
+    public function __construct(
+        public readonly Path $path,
+        public readonly Container $container = new Container(),
+        public AppState $state = AppState::Constructed,
+    ) {
         $this->startTimeSeconds = microtime(true);
     }
 
@@ -185,10 +179,11 @@ class App
      */
     protected function makeAppEnv(): AppEnv
     {
-        $isDevelopment = Env::getBoolOrNull('DEVELOP_MODE') ?? false;
-        $inTestMode = Env::getBoolOrNull('TEST_MODE') ?? false;
-
-        return new AppEnv($this->path, $isDevelopment, $inTestMode);
+        return new AppEnv(
+            $this->path,
+            Env::getBoolOrNull('DEVELOP_MODE') ?? false,
+            Env::getBoolOrNull('TEST_MODE') ?? false,
+        );
     }
 
     /**
@@ -196,11 +191,11 @@ class App
      */
     protected function makeDeployment(): Deployment
     {
-        $namespace = Env::getString('NAMESPACE');
-        $deployer = Env::getString('DEPLOYER');
-        $revision = Env::getString('REVISION');
-        $deployTime = Env::getFloat('DEPLOY_TIME');
-
-        return new Deployment($namespace, $deployer, $revision, $deployTime);
+        return new Deployment(
+            Env::getString('NAMESPACE'),
+            Env::getStringOrNull('DEPLOYER') ?? 'unknown',
+            Env::getStringOrNull('REVISION') ?? 'unknown',
+            Env::getFloatOrNull('DEPLOY_TIME') ?? 0.0,
+        );
     }
 }
