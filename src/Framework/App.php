@@ -142,16 +142,8 @@ class App
     protected function runInitializers(array $userInitializers): void
     {
         $container = $this->container;
-
         foreach ($userInitializers as $initializer) {
             $container->make($initializer)->register($container);
-        }
-    }
-
-    protected function invokeLifeCycleStartedMethods(): void
-    {
-        foreach ($this->lifeCycles as $lifeCycle) {
-            $lifeCycle->started($this);
         }
     }
 
