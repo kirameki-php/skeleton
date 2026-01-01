@@ -13,21 +13,20 @@ use Kirameki\Container\Container;
 use Kirameki\Http\HttpMethod;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;
-use function array_map;
 
 class HttpRouterBuilder
 {
     /**
      * @param Container $container
-     * @param array<string, list<HttpRoute>> $groups
      * @param ExceptionFilter|null $exceptionFilter
-     * @param array $routeFilters
+     * @param list<RouteFilter> $routeFilters
+     * @param HttpRouteTree $tree
      */
     public function __construct(
         protected Container $container,
-        protected array $groups = [],
         protected ?ExceptionFilter $exceptionFilter = null,
         protected array $routeFilters = [],
+        protected HttpRouteTree $tree = new HttpRouteTree(),
     ) {
     }
 
@@ -85,7 +84,8 @@ class HttpRouterBuilder
             ? new CallbackHttpRoute($method, $path, $controller)
             : new ControllerHttpRoute($method, $path, $controller);
 
-        $this->groups[$route->method->value][] = $route;
+        $segments = explode('/', trim($route->path, '/'));
+        $this->tree->add($segments, $route);
 
         return $this;
     }
@@ -117,7 +117,7 @@ class HttpRouterBuilder
     {
         return new HttpRouter(
             $this->container,
-            array_map(HttpRouteTree::for(...), $this->groups),
+            $this->tree,
             $this->exceptionFilter ?? new DefaultExceptionFilter(),
             $this->routeFilters,
         );

@@ -6,9 +6,9 @@ use Kirameki\Container\Container;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Http\HttpRunner;
 
-class HttpInitializer implements ServiceInitializer
+class HttpInitializer extends ServiceInitializer
 {
-    function register(Container $container): void
+    public function register(Container $container): void
     {
         $container->singleton(HttpRunner::class, static fn(Container $c) => $c->inject(HttpRunner::class));
     }

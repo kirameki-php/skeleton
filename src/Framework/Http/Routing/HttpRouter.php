@@ -9,20 +9,20 @@ use Kirameki\Framework\Http\HttpContext;
 use Kirameki\Container\Container;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;
+use Kirameki\Http\StatusCode;
 use Throwable;
-use function dump;
 
 class HttpRouter
 {
     /**
      * @param Container $container
-     * @param array<string, HttpRouteTree> $trees
+     * @param HttpRouteTree $tree
      * @param ExceptionFilter $exceptionFilter
      * @param list<RouteFilter> $routeFilters
      */
     public function __construct(
         protected Container $container,
-        protected array $trees,
+        protected HttpRouteTree $tree,
         protected ExceptionFilter $exceptionFilter,
         protected array $routeFilters = [],
     ) {
@@ -35,9 +35,14 @@ class HttpRouter
      */
     public function dispatch(AppScope $scope, HttpRequest $request): HttpResponse
     {
-        $route = $this->findRoute($request);
+        $resource = $this->tree->find($request);
+        if ($resource === null) {
+            return $this->buildResponse($request, StatusCode::NotFound);
+        }
+
+        $route = $resource->getOrNull($request->method);
         if ($route === null) {
-            return new HttpResponse($request->version, 404);
+            return $this->buildResponse($request, StatusCode::MethodNotAllowed);
         }
 
         $context = new HttpContext($this->container, $scope, $request, $route);
@@ -50,10 +55,13 @@ class HttpRouter
         }
     }
 
-    protected function findRoute(HttpRequest $request): ?HttpRoute
+    /**
+     * @param HttpRequest $request
+     * @param int $statusCode
+     * @return HttpResponse
+     */
+    protected function buildResponse(HttpRequest $request, int $statusCode): HttpResponse
     {
-        $method = $request->method->value;
-        $tree = $this->trees[$method] ?? null;
-        return $tree?->find($request);
+        return new HttpResponse($request->version, $statusCode);
     }
 }

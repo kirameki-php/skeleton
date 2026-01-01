@@ -4,17 +4,15 @@ namespace Kirameki\App\Initializers;
 
 use Kirameki\Framework\Http\Controllers\Health\ReadinessController;
 use Kirameki\Framework\Http\Initializers\RoutesInitializerAbstract;
-use Kirameki\Framework\Http\Routing\HttpRouter;
 use Kirameki\Framework\Http\Routing\HttpRouterBuilder;
 
 class RoutesInitializer extends RoutesInitializerAbstract
 {
-    protected function setup(HttpRouterBuilder $router): HttpRouter
+    protected function setup(HttpRouterBuilder $router): void
     {
-        return $router
+        $router
             ->get('/readyz', ReadinessController::class)
             ->get('/users/{id|int}', ReadinessController::class)
-            ->get('/users/{id}', ReadinessController::class)
-            ->build();
+            ->get('/users/{id}', ReadinessController::class);
     }
 }

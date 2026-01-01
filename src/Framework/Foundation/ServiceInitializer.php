@@ -19,5 +19,5 @@ abstract class ServiceInitializer
      * @param Container $container
      * @return void
      */
-    abstract protected function register(Container $container): void;
+    abstract public function register(Container $container): void;
 }

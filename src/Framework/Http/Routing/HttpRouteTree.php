@@ -15,7 +15,7 @@ use const PHP_INT_MAX;
 final class HttpRouteTree
 {
     /**
-     * @var array<string, HttpRoute|HttpRouteTree>
+     * @var array<string, HttpRouteTree|HttpResource>
      */
     protected array $nodes = [];
 
@@ -30,42 +30,29 @@ final class HttpRouteTree
     protected array $regexIndexMap = [];
 
     /**
-     * @param list<HttpRoute> $routes
-     * @return static
-     */
-    public static function for(array $routes = []): self
-    {
-        $self = new self();
-        foreach ($routes as $route) {
-            $segments = explode('/', trim($route->path, '/'));
-            $self->add($segments, $route);
-        }
-        return $self;
-    }
-
-    /**
      * @param int $level
      */
-    protected function __construct(
+    public function __construct(
         protected int $level = 0,
     ) {
     }
 
     /**
      * @param HttpRequest $request
-     * @return HttpRoute|null
+     * @return HttpResource|null
      */
-    public function find(HttpRequest $request): ?HttpRoute
+    public function find(HttpRequest $request): ?HttpResource
     {
         $path = trim($request->url->path, '/');
-        return $this->findRecursive(explode('/', $path));
+        $pathParts = explode('/', $path);
+        return $this->findRecursive($pathParts);
     }
 
     /**
      * @param list<string> $pathParts
-     * @return HttpRoute|null
+     * @return HttpResource|null
      */
-    protected function findRecursive(array $pathParts): ?HttpRoute
+    protected function findRecursive(array $pathParts): ?HttpResource
     {
         $part = array_shift($pathParts);
 
@@ -97,16 +84,17 @@ final class HttpRouteTree
 
     /**
      * @param list<string> $remainingParts
-     * @param object|null $route
-     * @return HttpRoute|null
+     * @param list<HttpRoute>|self|null $node
+     * @return HttpResource|null
      */
-    protected function resolveNode(array $remainingParts, ?object $route): ?HttpRoute
+    protected function resolveNode(array $remainingParts, mixed $node): ?HttpResource
     {
-        if ($route instanceof HttpRoute) {
-            return $route;
+        if ($node instanceof HttpResource) {
+            return $node;
         }
-        if ($route instanceof self) {
-            $result = $route->findRecursive($remainingParts);
+
+        if ($node instanceof self) {
+            $result = $node->findRecursive($remainingParts);
             if ($result !== null) {
                 return $result;
             }
@@ -140,7 +128,8 @@ final class HttpRouteTree
             $this->nodes[$segment] ??= new HttpRouteTree($this->level + 1);
             $this->nodes[$segment]->add($segments, $route);
         } else {
-            $this->nodes[$segment] = $route;
+            $this->nodes[$segment] ??= new HttpResource();
+            $this->nodes[$segment]->add($route);
         }
     }
 }

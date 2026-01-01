@@ -12,13 +12,15 @@ abstract class RoutesInitializerAbstract extends ServiceInitializer
     public function register(Container $container): void
     {
         $container->singleton(HttpRouter::class, function(Container $container) {
-            return $this->setup(new HttpRouterBuilder($container));
+            $builder = new HttpRouterBuilder($container);
+            $this->setup($builder);
+            return $builder->build();
         });
     }
 
     /**
      * @param HttpRouterBuilder $router
-     * @return HttpRouter
+     * @return void
      */
-    protected abstract function setup(HttpRouterBuilder $router): HttpRouter;
+    protected abstract function setup(HttpRouterBuilder $router): void;
 }

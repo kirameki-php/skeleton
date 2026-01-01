@@ -15,7 +15,7 @@ class ExceptionInitializer extends ServiceInitializer
      * @inheritDoc
      */
     #[Override]
-    protected function register(Container $container): void
+    public function register(Container $container): void
     {
         $container->singleton(ExceptionHandler::class, function () use ($container) {
             $logger = $container->get(LoggerInterface::class);
