@@ -3,11 +3,11 @@
 namespace Kirameki\App\Initializers;
 
 use Kirameki\Framework\Logging\LoggerBuilder;
-use Kirameki\Framework\Logging\LoggerInitializerAbstract;
+use Kirameki\Framework\Logging\LoggerInitializerBase;
 use Kirameki\Framework\Logging\LogLevel;
 use Kirameki\Framework\Logging\Writers\ConsoleWriter;
 
-class LoggerInitializer extends LoggerInitializerAbstract
+class LoggerInitializer extends LoggerInitializerBase
 {
     protected function setup(LoggerBuilder $builder): void
     {

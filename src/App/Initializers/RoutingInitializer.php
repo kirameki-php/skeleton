@@ -3,10 +3,10 @@
 namespace Kirameki\App\Initializers;
 
 use Kirameki\Framework\Http\Controllers\Health\ReadinessController;
-use Kirameki\Framework\Http\Initializers\RoutesInitializerAbstract;
 use Kirameki\Framework\Http\Routing\HttpRouterBuilder;
+use Kirameki\Framework\Http\RoutingInitializerBase;
 
-class RoutesInitializer extends RoutesInitializerAbstract
+class RoutingInitializer extends RoutingInitializerBase
 {
     protected function setup(HttpRouterBuilder $router): void
     {

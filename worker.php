@@ -1,6 +1,8 @@
 <?php
 
-use Kirameki\App\Initializers\RoutesInitializer;
+use Kirameki\App\Initializers\ExceptionInitializer;
+use Kirameki\App\Initializers\LoggerInitializer;
+use Kirameki\App\Initializers\RoutingInitializer;
 use Kirameki\Dumper\Config;
 use Kirameki\Dumper\Dumper;
 use Kirameki\Framework\App;
@@ -18,7 +20,9 @@ chdir($path->toString());
 $app = new App($path);
 
 $app->boot([
-    RoutesInitializer::class,
+    LoggerInitializer::class,
+    ExceptionInitializer::class,
+    RoutingInitializer::class,
 ]);
 
 $handler = static fn() => $app->handleHttp($_SERVER);

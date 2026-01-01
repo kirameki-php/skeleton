@@ -3,7 +3,6 @@
 namespace Kirameki\Framework;
 
 use Closure;
-use Kirameki\App\Initializers\LoggerInitializer;
 use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
@@ -14,11 +13,9 @@ use Kirameki\Framework\Foundation\AppLifeCycle;
 use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Foundation\AppState;
 use Kirameki\Framework\Foundation\Deployment;
-use Kirameki\Framework\Foundation\Initializers\ExceptionInitializer;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Http\HealthCheck;
 use Kirameki\Framework\Http\HttpRunner;
-use Kirameki\Framework\Http\Initializers\HttpInitializer;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
 use function touch;
@@ -39,15 +36,6 @@ class App
      * @var string
      */
     public string $threadId = '';
-
-    /**
-     * @var list<class-string<ServiceInitializer>>
-     */
-    protected array $initializers = [
-        LoggerInitializer::class,
-        ExceptionInitializer::class,
-        HttpInitializer::class,
-    ];
 
     /**
      * @var list<AppLifeCycle>
@@ -151,6 +139,7 @@ class App
         $container->instance(EventDispatcher::class, new EventDispatcher());
         $container->instance(NanoIdGenerator::class, new NanoIdGenerator());
         $container->scoped(AppScope::class, fn() => new AppScope());
+        $container->singleton(HttpRunner::class);
     }
 
     /**
@@ -168,10 +157,6 @@ class App
     protected function runInitializers(array $userInitializers): void
     {
         $container = $this->container;
-
-        foreach ($this->initializers as $initializer) {
-            $container->make($initializer)->register($container);
-        }
 
         foreach ($userInitializers as $initializer) {
             $container->make($initializer)->register($container);

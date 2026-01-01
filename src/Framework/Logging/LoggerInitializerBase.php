@@ -6,14 +6,8 @@ use Kirameki\Container\Container;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Override;
 
-abstract class LoggerInitializerAbstract extends ServiceInitializer
+abstract class LoggerInitializerBase extends ServiceInitializer
 {
-    /**
-     * @param LoggerBuilder $builder
-     * @return void
-     */
-    abstract protected function setup(LoggerBuilder $builder): void;
-
     /**
      * @inheritDoc
      */
@@ -21,9 +15,15 @@ abstract class LoggerInitializerAbstract extends ServiceInitializer
     public function register(Container $container): void
     {
         $container->singleton(Logger::class, function(): Logger {
-            $builder = new LoggerBuilder();
-            $this->setup($builder);
+            $this->setup($builder = new LoggerBuilder());
             return $builder->build();
         });
     }
+
+    /**
+     * @param LoggerBuilder $builder
+     * @return void
+     */
+    abstract protected function setup(LoggerBuilder $builder): void;
+
 }
