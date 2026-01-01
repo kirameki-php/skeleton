@@ -11,7 +11,6 @@ use Kirameki\Framework\Crypto\NanoIdGenerator;
 use Kirameki\Framework\Foundation\AppEnv;
 use Kirameki\Framework\Foundation\AppLifeCycle;
 use Kirameki\Framework\Foundation\AppScope;
-use Kirameki\Framework\Foundation\AppState;
 use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Http\HealthCheck;
@@ -40,12 +39,10 @@ class App
     /**
      * @param Path $path
      * @param Container $container
-     * @param AppState $state
      */
     public function __construct(
         public readonly Path $path,
         public readonly Container $container = new Container(),
-        public AppState $state = AppState::Constructed,
     ) {
         $this->startTimeSeconds = microtime(true);
     }
@@ -56,8 +53,6 @@ class App
      */
     public function boot(array $initializers): void
     {
-        $this->state = AppState::Booting;
-
         $this->injectEssentialServices();
         $this->generateThreadId();
         $this->runInitializers($initializers);
@@ -74,8 +69,6 @@ class App
      */
     public function terminate(): void
     {
-        $this->state = AppState::Terminating;
-
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->terminating($this);
         }
@@ -83,8 +76,6 @@ class App
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->terminated($this);
         }
-
-        $this->state = AppState::Terminated;
     }
 
     /**
@@ -170,8 +161,6 @@ class App
     protected function markAsReady(): void
     {
         touch(HealthCheck::READINESS_FILE);
-
-        $this->state = AppState::Running;
     }
 
     /**
