@@ -185,8 +185,8 @@ class App
      */
     protected function makeAppEnv(): AppEnv
     {
-        $isDevelopment = Env::getBoolOrNull('APP_DEVELOP_MODE') ?? false;
-        $inTestMode = Env::getBoolOrNull('APP_TEST_MODE') ?? false;
+        $isDevelopment = Env::getBoolOrNull('DEVELOP_MODE') ?? false;
+        $inTestMode = Env::getBoolOrNull('TEST_MODE') ?? false;
 
         return new AppEnv($this->path, $isDevelopment, $inTestMode);
     }
@@ -196,8 +196,11 @@ class App
      */
     protected function makeDeployment(): Deployment
     {
-        $namespace = Env::getString('APP_NAMESPACE');
+        $namespace = Env::getString('NAMESPACE');
+        $deployer = Env::getString('DEPLOYER');
+        $revision = Env::getString('REVISION');
+        $deployTime = Env::getFloat('DEPLOY_TIME');
 
-        return new Deployment($namespace);
+        return new Deployment($namespace, $deployer, $revision, $deployTime);
     }
 }

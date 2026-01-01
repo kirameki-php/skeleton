@@ -13,10 +13,9 @@ class Deployment
      */
     public function __construct(
         public readonly string $namespace,
-        public readonly float $deployedTimeFloat = 0.0,
         public readonly string $deployer = '',
         public readonly string $revision = '',
-        public readonly string $title = '',
+        public readonly float $deployedTimeFloat = 0.0,
     ) {
     }
 }
