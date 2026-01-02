@@ -10,6 +10,7 @@
         "ext-posix": "*",
         "hidehalo/nanoid-php": "^2.0",
         "kirameki/container": "dev-main",
+        "kirameki/database": "dev-main",
         "kirameki/utils": "dev-main"
     },
     "require-dev": {

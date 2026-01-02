@@ -19,7 +19,7 @@ use function getallheaders;
 use function hrtime;
 use function sprintf;
 
-class HttpRunner
+class HttpServer
 {
     /**
      * @param EventDispatcher $events
@@ -38,7 +38,7 @@ class HttpRunner
      */
     function run(AppScope $scope, array $server): void
     {
-        $request = $this->buildRequestFromEnvs();
+        $request = $this->buildRequestFromEnvs($server);
         $this->events->emit(new RequestReceived($request));
         $then = hrtime(true);
         $response = $this->router->dispatch($scope, $request);
@@ -48,13 +48,14 @@ class HttpRunner
     }
 
     /**
+     * @param array<string, mixed> $server
      * @return HttpRequest
      */
-    protected function buildRequestFromEnvs(): HttpRequest
+    protected function buildRequestFromEnvs(array $server): HttpRequest
     {
-        $method = HttpMethod::from($_REQUEST['_method'] ?? $_SERVER['REQUEST_METHOD']);
-        $version = (float) str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1');
-        $urlString = ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $_SERVER['REQUEST_SCHEME'] ?? 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        $method = HttpMethod::from($server['REQUEST_METHOD']);
+        $version = (float) str_replace('HTTP/', '', $server['SERVER_PROTOCOL'] ?? 'HTTP/1.1');
+        $urlString = ($server['HTTP_X_FORWARDED_PROTO'] ?? $server['REQUEST_SCHEME'] ?? 'http') . '://' . $server['HTTP_HOST'] . $server['REQUEST_URI'];
         $url = Url::parse($urlString);
         $headers = new HttpRequestHeaders();
         foreach (getallheaders() as $name => $value) {

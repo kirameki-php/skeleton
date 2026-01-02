@@ -13,6 +13,11 @@ use Kirameki\Container\Container;
 use Kirameki\Http\HttpMethod;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;
+use function array_pop;
+use function count;
+use function explode;
+use function implode;
+use function trim;
 
 class HttpRouterBuilder
 {
@@ -21,13 +26,32 @@ class HttpRouterBuilder
      * @param ExceptionFilter|null $exceptionFilter
      * @param list<RouteFilter> $routeFilters
      * @param HttpRouteTree $tree
+     * @param list<string> $namespaces
      */
     public function __construct(
         protected Container $container,
         protected ?ExceptionFilter $exceptionFilter = null,
         protected array $routeFilters = [],
         protected HttpRouteTree $tree = new HttpRouteTree(),
+        protected array $namespaces = [],
     ) {
+    }
+
+    /**
+     * @param string $prefix
+     * @param Closure(HttpRouterBuilder): void $call
+     * @return $this
+     */
+    public function namespace(string $prefix, Closure $call): static
+    {
+        try {
+            $this->namespaces[] = $prefix;
+            $call($this);
+            return $this;
+        }
+        finally {
+            array_pop($this->namespaces);
+        }
     }
 
     /**
@@ -73,16 +97,58 @@ class HttpRouterBuilder
     }
 
     /**
+     * @param string $path
+     * @param class-string<Controller> $controller
+     * @param ResourceOptions|null $options
+     * @return $this
+     */
+    public function resources(string $path, string $controller, ?ResourceOptions $options = null): static
+    {
+        $options ??= ResourceOptions::default();
+
+        if ($options->viewable) {
+            $this->addRoute(HttpMethod::GET, $path, $controller, 'index');
+            $this->addRoute(HttpMethod::GET, "{$path}/{id}", $controller, 'show');
+        }
+
+        if ($options->creatable) {
+            if ($options->form) {
+                $this->addRoute(HttpMethod::GET, "{$path}/new", $controller, 'new');
+            }
+            $this->addRoute(HttpMethod::POST, $path, $controller, 'create');
+        }
+
+        if ($options->editable) {
+            if ($options->form) {
+                $this->addRoute(HttpMethod::GET, "{$path}/{id}/edit", $controller, 'edit');
+            }
+            $this->addRoute(HttpMethod::PUT, "{$path}/{id}", $controller, 'update');
+            $this->addRoute(HttpMethod::PATCH, "{$path}/{id}", $controller, 'update');
+        }
+
+        if ($options->deletable) {
+            $this->addRoute(HttpMethod::DELETE, "{$path}/{id}", $controller, 'delete');
+        }
+
+        return $this;
+    }
+
+    /**
      * @param HttpMethod $method
      * @param string $path
      * @param class-string<Controller>|Closure(HttpRequest): HttpResponse $controller
+     * @param string|null $action
      * @return $this
      */
-    public function addRoute(HttpMethod $method, string $path, string|Closure $controller): static
+    public function addRoute(HttpMethod $method, string $path, string|Closure $controller, ?string $action = null): static
     {
+        if (count($this->namespaces) > 0) {
+            $path = implode('/', $this->namespaces) . '/' . trim($path, '/');
+        }
+
         $route = ($controller instanceof Closure)
             ? new CallbackHttpRoute($method, $path, $controller)
-            : new ControllerHttpRoute($method, $path, $controller);
+            : new ControllerHttpRoute($method, $path, $controller, $action);
 
         $segments = explode('/', trim($route->path, '/'));
         $this->tree->add($segments, $route);

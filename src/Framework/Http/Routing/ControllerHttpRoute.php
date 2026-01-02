@@ -14,11 +14,13 @@ class ControllerHttpRoute extends HttpRoute
      * @param HttpMethod $method
      * @param string $path
      * @param class-string<Controller> $controller
+     * @param string|null $action
      */
     public function __construct(
         HttpMethod $method,
         string $path,
         public readonly string $controller,
+        public readonly ?string $action = null,
     ) {
         parent::__construct($method, $path);
     }
@@ -33,7 +35,7 @@ class ControllerHttpRoute extends HttpRoute
             'request' => $context->request,
             'route' => $context->route,
         ]);
-        return $controller->handle(...);
+        return $controller->{$this->action ?? 'handle'}(...);
     }
 
     /**

@@ -14,9 +14,10 @@ use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Http\HealthCheck;
-use Kirameki\Framework\Http\HttpRunner;
+use Kirameki\Framework\Http\HttpServer;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
+use Throwable;
 use function touch;
 
 class App
@@ -84,7 +85,7 @@ class App
      */
     public function handleHttp(array $server): void
     {
-        $httpRunner = $this->container->make(HttpRunner::class);
+        $httpRunner = $this->container->make(HttpServer::class);
         $this->withScope(static fn(AppScope $scope) => $httpRunner->run($scope, $server));
     }
 
@@ -124,7 +125,7 @@ class App
         $container->instance(EventDispatcher::class, new EventDispatcher());
         $container->instance(NanoIdGenerator::class, new NanoIdGenerator());
         $container->scoped(AppScope::class, fn() => new AppScope());
-        $container->singleton(HttpRunner::class);
+        $container->singleton(HttpServer::class);
     }
 
     /**

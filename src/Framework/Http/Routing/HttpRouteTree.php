@@ -4,12 +4,15 @@ namespace Kirameki\Framework\Http\Routing;
 
 use Kirameki\Exceptions\InvalidArgumentException;
 use Kirameki\Http\HttpRequest;
+use function array_shift;
 use function compact;
 use function count;
 use function explode;
 use function preg_match;
+use function str_ends_with;
 use function str_starts_with;
 use function substr;
+use function trim;
 use const PHP_INT_MAX;
 
 final class HttpRouteTree
