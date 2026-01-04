@@ -7,7 +7,6 @@ use Kirameki\Http\HttpRequest;
 use function array_shift;
 use function compact;
 use function count;
-use function dump;
 use function explode;
 use function preg_match;
 use function str_ends_with;
@@ -21,7 +20,7 @@ final class HttpRouteTree
     /**
      * @var array<string, HttpRouteTree>
      */
-    protected array $nodes = [];
+    public array $nodes = [];
 
     /**
      * @var array<string, int>
@@ -33,7 +32,10 @@ final class HttpRouteTree
      */
     protected array $regexIndexMap = [];
 
-    protected HTtpResource|null $resource = null;
+    /**
+     * @var HttpResource|null
+     */
+    public HttpResource|null $resource = null;
 
     /**
      * @param int $level

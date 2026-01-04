@@ -7,6 +7,7 @@ use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
 use Kirameki\Event\EventDispatcher;
+use Kirameki\Framework\Cli\CommandRegistry;
 use Kirameki\Framework\Cli\CommandRunner;
 use Kirameki\Framework\Crypto\NanoIdGenerator;
 use Kirameki\Framework\Foundation\AppEnv;
@@ -133,6 +134,7 @@ class App
         $container->instance(EventDispatcher::class, new EventDispatcher());
         $container->instance(NanoIdGenerator::class, new NanoIdGenerator());
         $container->scoped(AppScope::class, fn() => new AppScope());
+        $container->singleton(CommandRegistry::class);
         $container->singleton(HttpServer::class);
     }
 

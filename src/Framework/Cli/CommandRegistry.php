@@ -27,7 +27,7 @@ class CommandRegistry
     {
         $definition = $command::getDefinition();
 
-        if (!array_key_exists($definition->name, $this->registered)) {
+        if (array_key_exists($definition->name, $this->registered)) {
             throw new DuplicateEntryException($command, [
                 'command' => $command,
             ]);
@@ -45,7 +45,7 @@ class CommandRegistry
      */
     public function getDefinition(string $name): CommandDefinition
     {
-        if (!class_exists($name) || !is_subclass_of($name, Command::class)) {
+        if (is_subclass_of($name, Command::class)) {
             return $name::getDefinition();
         }
 

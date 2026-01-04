@@ -11,7 +11,7 @@ class HttpResource
      * @param array<string, HttpRoute> $routes
      */
     public function __construct(
-        protected array $routes = [],
+        public array $routes = [],
     ) {
     }
 

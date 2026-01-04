@@ -4,6 +4,7 @@ namespace Kirameki\Framework\Http;
 
 use Kirameki\Container\Container;
 use Kirameki\Framework\Foundation\ServiceInitializer;
+use Kirameki\Framework\Http\Routing\Commands\ListCommand;
 use Kirameki\Framework\Http\Routing\HttpRouter;
 use Kirameki\Framework\Http\Routing\HttpRouterBuilder;
 use Override;
@@ -20,6 +21,10 @@ abstract class RoutingInitializerBase extends ServiceInitializer
             $this->setup($builder = new HttpRouterBuilder($container));
             return $builder->build();
         });
+
+        $this->addCommands([
+            ListCommand::class,
+        ]);
     }
 
     /**

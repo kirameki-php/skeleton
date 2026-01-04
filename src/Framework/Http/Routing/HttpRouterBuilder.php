@@ -142,16 +142,16 @@ class HttpRouterBuilder
      */
     public function addRoute(HttpMethod $method, string $path, string|Closure $controller, ?string $action = null): static
     {
-        if (count($this->namespaces) > 0) {
-            $path = implode('/', $this->namespaces) . '/' . trim($path, '/');
-        }
+        $path = trim($path, '/');
+        $path = ($path !== '')
+            ? implode('/', [...$this->namespaces, $path])
+            : implode('/', $this->namespaces);
 
         $route = ($controller instanceof Closure)
             ? new CallbackHttpRoute($method, $path, $controller)
             : new ControllerHttpRoute($method, $path, $controller, $action);
 
-        $segments = explode('/', trim($route->path, '/'));
-        $this->tree->add($segments, $route);
+        $this->tree->add(explode('/', $route->path), $route);
 
         return $this;
     }

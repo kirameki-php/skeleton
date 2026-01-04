@@ -3,6 +3,7 @@
 namespace Kirameki\Framework\Cli;
 
 use Kirameki\Container\Container;
+use Kirameki\Event\EventDispatcher;
 use Kirameki\Event\EventEmitter;
 use Kirameki\Framework\Cli\Events\CommandExecuted;
 use Kirameki\Framework\Cli\Events\CommandExecuting;
@@ -30,7 +31,7 @@ class CommandRunner
     public function __construct(
         protected readonly Container $container,
         protected readonly CommandRegistry $registry,
-        protected readonly EventEmitter $events,
+        protected readonly EventDispatcher $events,
         protected readonly Output $output = new Output(),
         protected readonly Input $input = new Input(),
     ) {

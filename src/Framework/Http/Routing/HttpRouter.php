@@ -22,7 +22,7 @@ class HttpRouter
      */
     public function __construct(
         protected Container $container,
-        protected HttpRouteTree $tree,
+        public readonly HttpRouteTree $tree,
         protected ExceptionFilter $exceptionFilter,
         protected array $routeFilters = [],
     ) {
