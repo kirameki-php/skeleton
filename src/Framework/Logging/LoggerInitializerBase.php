@@ -12,7 +12,7 @@ abstract class LoggerInitializerBase extends ServiceInitializer
      * @inheritDoc
      */
     #[Override]
-    public function register(Container $container): void
+    final public function register(Container $container): void
     {
         $container->singleton(Logger::class, function(): Logger {
             $this->setup($builder = new LoggerBuilder());

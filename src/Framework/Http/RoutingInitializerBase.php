@@ -14,7 +14,7 @@ abstract class RoutingInitializerBase extends ServiceInitializer
      * @inheritDoc
      */
     #[Override]
-    public function register(Container $container): void
+    final public function register(Container $container): void
     {
         $container->singleton(HttpRouter::class, function(Container $container): HttpRouter {
             $this->setup($builder = new HttpRouterBuilder($container));

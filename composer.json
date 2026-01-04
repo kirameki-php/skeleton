@@ -4,6 +4,7 @@
     "require": {
         "php": ">=8.5",
         "ext-apcu": "*",
+        "ext-intl": "*",
         "ext-json": "*",
         "ext-pcntl": "*",
         "ext-pdo": "*",

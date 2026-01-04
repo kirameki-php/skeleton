@@ -17,28 +17,38 @@ use Kirameki\Http\Url;
 use function file_get_contents;
 use function getallheaders;
 use function hrtime;
+use function pcntl_async_signals;
+use function pcntl_signal;
 use function sprintf;
+use function touch;
+use function unlink;
+use const SIGINT;
+use const SIGTERM;
 
 class HttpServer
 {
     /**
      * @param EventDispatcher $events
      * @param HttpRouter $router
+     * @param list<int> $terminalSignals
      */
     public function __construct(
         protected EventDispatcher $events,
         protected HttpRouter $router,
+        array $terminalSignals = [SIGTERM, SIGINT],
     ) {
+        $this->captureTerminalSignals($terminalSignals);
+        $this->markAsReady();
     }
 
     /**
      * @param AppScope $scope
-     * @param array<string, mixed> $server
+     * @param array<string, mixed> $info
      * @return void
      */
-    function run(AppScope $scope, array $server): void
+    public function run(AppScope $scope, array $info): void
     {
-        $request = $this->buildRequestFromEnvs($server);
+        $request = $this->buildRequestFromEnvs($info);
         $this->events->emit(new RequestReceived($request));
         $then = hrtime(true);
         $response = $this->router->dispatch($scope, $request);
@@ -48,14 +58,42 @@ class HttpServer
     }
 
     /**
-     * @param array<string, mixed> $server
+     * @param list<int> $signals
+     * @return void
+     */
+    protected function captureTerminalSignals(array $signals): void
+    {
+        pcntl_async_signals(true);
+        foreach ($signals as $signal) {
+            pcntl_signal($signal, $this->markAsTerminating(...));
+        }
+    }
+
+    /**
+     * @return void
+     */
+    protected function markAsReady(): void
+    {
+        touch(HealthCheck::READINESS_FILE);
+    }
+
+    /**
+     * @return void
+     */
+    protected function markAsTerminating(): void
+    {
+        @unlink(HealthCheck::READINESS_FILE);
+    }
+
+    /**
+     * @param array<string, mixed> $info
      * @return HttpRequest
      */
-    protected function buildRequestFromEnvs(array $server): HttpRequest
+    protected function buildRequestFromEnvs(array $info): HttpRequest
     {
-        $method = HttpMethod::from($server['REQUEST_METHOD']);
-        $version = (float) str_replace('HTTP/', '', $server['SERVER_PROTOCOL'] ?? 'HTTP/1.1');
-        $urlString = ($server['HTTP_X_FORWARDED_PROTO'] ?? $server['REQUEST_SCHEME'] ?? 'http') . '://' . $server['HTTP_HOST'] . $server['REQUEST_URI'];
+        $method = HttpMethod::from($info['REQUEST_METHOD']);
+        $version = (float) str_replace('HTTP/', '', $info['SERVER_PROTOCOL'] ?? 'HTTP/1.1');
+        $urlString = ($info['HTTP_X_FORWARDED_PROTO'] ?? $info['REQUEST_SCHEME'] ?? 'http') . '://' . $info['HTTP_HOST'] . $info['REQUEST_URI'];
         $url = Url::parse($urlString);
         $headers = new HttpRequestHeaders();
         foreach (getallheaders() as $name => $value) {

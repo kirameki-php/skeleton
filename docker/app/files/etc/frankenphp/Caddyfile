@@ -6,7 +6,7 @@
     encode zstd br gzip
 
     php {
-        worker worker.php {
+        worker scripts/http.php {
             match *
             watch
         }

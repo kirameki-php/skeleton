@@ -7,25 +7,23 @@ use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
 use Kirameki\Event\EventDispatcher;
+use Kirameki\Framework\Cli\CommandRunner;
 use Kirameki\Framework\Crypto\NanoIdGenerator;
 use Kirameki\Framework\Foundation\AppEnv;
 use Kirameki\Framework\Foundation\AppLifeCycle;
 use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\ServiceInitializer;
-use Kirameki\Framework\Http\HealthCheck;
 use Kirameki\Framework\Http\HttpServer;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
-use Throwable;
-use function touch;
 
 class App
 {
     /**
      * @var string
      */
-    public string $threadId = '';
+    public string $runId = '';
 
     /**
      * @var list<AppLifeCycle>
@@ -55,14 +53,12 @@ class App
     public function boot(array $initializers): void
     {
         $this->injectEssentialServices();
-        $this->generateThreadId();
+        $this->generateRunId();
         $this->runInitializers($initializers);
 
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->started($this);
         }
-
-        $this->markAsReady();
     }
 
     /**
@@ -80,13 +76,24 @@ class App
     }
 
     /**
-     * @param array<string, string> $server
+     * @param array<string, mixed> $info
      * @return void
      */
-    public function handleHttp(array $server): void
+    public function handleHttp(array $info): void
     {
-        $httpRunner = $this->container->make(HttpServer::class);
-        $this->withScope(static fn(AppScope $scope) => $httpRunner->run($scope, $server));
+        $server = $this->container->get(HttpServer::class);
+        $this->withScope(static fn(AppScope $scope) => $server->run($scope, $info));
+    }
+
+    /**
+     * @param string $name
+     * @param list<string> $parameters
+     * @return int
+     */
+    public function runCommand(array $args): int
+    {
+        $runner = $this->container->make(CommandRunner::class);
+        return $this->withScope(static fn() => $runner->runFromArgs($args));
     }
 
     /**
@@ -99,13 +106,14 @@ class App
     }
 
     /**
-     * @param Closure(AppScope): mixed $call
-     * @return void
+     * @template TReturn of mixed
+     * @param Closure(AppScope): TReturn $call
+     * @return TReturn
      */
-    protected function withScope(Closure $call): void
+    protected function withScope(Closure $call): mixed
     {
         try {
-            $call($this->container->get(AppScope::class));
+            return $call($this->container->get(AppScope::class));
         } finally {
             $this->container->unsetScopedInstances();
         }
@@ -131,29 +139,21 @@ class App
     /**
      * @return void
      */
-    protected function generateThreadId(): void
+    protected function generateRunId(): void
     {
-        $this->threadId = $this->container->get(NanoIdGenerator::class)->generate();
+        $this->runId = $this->container->get(NanoIdGenerator::class)->generate();
     }
 
     /**
-     * @param array<class-string<ServiceInitializer>> $userInitializers
+     * @param array<class-string<ServiceInitializer>> $initializers
      * @return void
      */
-    protected function runInitializers(array $userInitializers): void
+    protected function runInitializers(array $initializers): void
     {
         $container = $this->container;
-        foreach ($userInitializers as $initializer) {
+        foreach ($initializers as $initializer) {
             $container->make($initializer)->register($container);
         }
-    }
-
-    /**
-     * @return void
-     */
-    protected function markAsReady(): void
-    {
-        touch(HealthCheck::READINESS_FILE);
     }
 
     /**

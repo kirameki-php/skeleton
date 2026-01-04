@@ -7,6 +7,7 @@ use Kirameki\Http\HttpRequest;
 use function array_shift;
 use function compact;
 use function count;
+use function dump;
 use function explode;
 use function preg_match;
 use function str_ends_with;
@@ -18,7 +19,7 @@ use const PHP_INT_MAX;
 final class HttpRouteTree
 {
     /**
-     * @var array<string, HttpRouteTree|HttpResource>
+     * @var array<string, HttpRouteTree>
      */
     protected array $nodes = [];
 
@@ -31,6 +32,8 @@ final class HttpRouteTree
      * @var array<string, array{index: int, regex: string}>
      */
     protected array $regexIndexMap = [];
+
+    protected HTtpResource|null $resource = null;
 
     /**
      * @param int $level
@@ -59,16 +62,20 @@ final class HttpRouteTree
     {
         $part = array_shift($pathParts);
 
+        if ($part === null) {
+            return $this->resource;
+        }
+
         if (count($this->regexIndexMap) === 0) {
-            return $this->resolveNode($pathParts, $this->nodes[$part] ?? null);
+            return $this->nodes[$part]->findRecursive($pathParts);
         }
 
         $exactIndex = $this->exactIndexMap[$part] ?? PHP_INT_MAX;
 
         foreach ($this->regexIndexMap as $segment => $data) {
-            // if exact match has higher priority, simply
+            // exact match has higher priority
             if ($exactIndex < $data['index']) {
-                $route = $this->resolveNode($pathParts, $this->nodes[$part]);
+                $route = $this->nodes[$part]->findRecursive($pathParts);
                 if ($route !== null) {
                     return $route;
                 }
@@ -76,30 +83,10 @@ final class HttpRouteTree
 
             // now check for param match
             if (preg_match($data['regex'], $part)) {
-                $route = $this->resolveNode($pathParts, $this->nodes[$segment]);
+                $route = $this->nodes[$segment]->findRecursive($pathParts);
                 if ($route !== null) {
                     return $route;
                 }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @param list<string> $remainingParts
-     * @param list<HttpRoute>|self|null $node
-     * @return HttpResource|null
-     */
-    protected function resolveNode(array $remainingParts, mixed $node): ?HttpResource
-    {
-        if ($node instanceof HttpResource) {
-            return $node;
-        }
-
-        if ($node instanceof self) {
-            $result = $node->findRecursive($remainingParts);
-            if ($result !== null) {
-                return $result;
             }
         }
         return null;
@@ -112,6 +99,12 @@ final class HttpRouteTree
      */
     public function add(array $segments, HttpRoute $route): void
     {
+        if ($segments === []) {
+            $this->resource ??= new HttpResource();
+            $this->resource->add($route);
+            return;
+        }
+
         $segment = array_shift($segments);
         $index = count($this->nodes);
 
@@ -127,12 +120,7 @@ final class HttpRouteTree
             $this->exactIndexMap[$segment] = $index;
         }
 
-        if (count($segments) !== 0) {
-            $this->nodes[$segment] ??= new HttpRouteTree($this->level + 1);
-            $this->nodes[$segment]->add($segments, $route);
-        } else {
-            $this->nodes[$segment] ??= new HttpResource();
-            $this->nodes[$segment]->add($route);
-        }
+        $this->nodes[$segment] ??= new HttpRouteTree($this->level + 1);
+        $this->nodes[$segment]->add($segments, $route);
     }
 }
