@@ -99,7 +99,7 @@ class HttpServer
         foreach (getallheaders() as $name => $value) {
             $headers->add($name, $value);
         }
-        $body = new HttpRequestBody(file_get_contents('php://input'));
+        $body = new HttpRequestBody(file_get_contents('php://input') ?: '');
         return new HttpRequest($method, $version, $url, $headers, $body);
     }
 
@@ -112,8 +112,8 @@ class HttpServer
         $statusCode = $response->statusCode;
         $statusLine = sprintf('%s %d %s', $response->protocolVersion(), $statusCode, StatusCode::asPhrase($statusCode));
         header($statusLine, true, $statusCode);
-        foreach ($response->headers as $name => $values) {
-            foreach ($values as $value) {
+        foreach ($response->headers->all() as $name => $header) {
+            foreach ($header->values as $value) {
                 header("$name: $value", false);
             }
         }

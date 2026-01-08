@@ -8,7 +8,7 @@ use Kirameki\Framework\Exception\Reporters\LogReporter;
 
 class ExceptionInitializer extends ExceptionInitializerBase
 {
-    protected function setup(ExceptionHandlerBuilder $handler): void
+    protected function build(ExceptionHandlerBuilder $handler): void
     {
         $handler
             ->addReporter(LogReporter::class)

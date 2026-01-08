@@ -10,11 +10,11 @@ use Kirameki\Framework\Http\Filters\DefaultExceptionFilter;
 use Kirameki\Framework\Http\Filters\ExceptionFilter;
 use Kirameki\Framework\Http\Filters\RouteFilter;
 use Kirameki\Container\Container;
+use Kirameki\Framework\Http\HttpContext;
 use Kirameki\Http\HttpMethod;
 use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;
 use function array_pop;
-use function count;
 use function explode;
 use function implode;
 use function trim;
@@ -55,6 +55,8 @@ class HttpRouterBuilder
     }
 
     /**
+     * @param string $path
+     * @param class-string<Controller>|Closure(HttpContext): HttpResponse $controller
      * @return $this
      */
     public function get(string $path, string|Closure $controller): static
@@ -63,6 +65,8 @@ class HttpRouterBuilder
     }
 
     /**
+     * @param string $path
+     * @param class-string<Controller>|Closure(HttpContext): HttpResponse $controller
      * @return $this
      */
     public function post(string $path, string|Closure $controller): static
@@ -71,6 +75,8 @@ class HttpRouterBuilder
     }
 
     /**
+     * @param string $path
+     * @param class-string<Controller>|Closure(HttpContext): HttpResponse $controller
      * @return $this
      */
     public function put(string $path, string|Closure $controller): static
@@ -79,6 +85,8 @@ class HttpRouterBuilder
     }
 
     /**
+     * @param string $path
+     * @param class-string<Controller>|Closure(HttpContext): HttpResponse $controller
      * @return $this
      */
     public function delete(string $path, string|Closure $controller): static
@@ -87,6 +95,8 @@ class HttpRouterBuilder
     }
 
     /**
+     * @param string $readinessPath
+     * @param string $livenessPath
      * @return $this
      */
     public function healthChecks(string $readinessPath = '/readyz', string $livenessPath = 'livez'): static
@@ -136,7 +146,7 @@ class HttpRouterBuilder
     /**
      * @param HttpMethod $method
      * @param string $path
-     * @param class-string<Controller>|Closure(HttpRequest): HttpResponse $controller
+     * @param class-string<Controller>|Closure(HttpContext): HttpResponse $controller
      * @param string|null $action
      * @return $this
      */

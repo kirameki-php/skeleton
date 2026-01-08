@@ -43,7 +43,6 @@ class Logger
      * @param Stringable|string $message
      * @param array<string, mixed> $context
      */
-    #[Override]
     public function log($level, string|Stringable $message, array $context = []): void
     {
         $time = microtime(true);
@@ -53,72 +52,80 @@ class Logger
     }
 
     /**
-     * @inheritDoc
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
      */
-    #[Override]
     public function debug(Stringable|string $message, array $context = []): void
     {
         $this->log(LogLevel::Debug, $message, $context);
     }
 
     /**
-     * @inheritDoc
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
      */
-    #[Override]
     public function info(Stringable|string $message, array $context = []): void
     {
         $this->log(LogLevel::Info, $message, $context);
     }
 
     /**
-     * @inheritDoc
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
      */
-    #[Override]
     public function notice(Stringable|string $message, array $context = []): void
     {
         $this->log(LogLevel::Notice, $message, $context);
     }
 
     /**
-     * @inheritDoc
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
      */
-    #[Override]
     public function warning(Stringable|string $message, array $context = []): void
     {
         $this->log(LogLevel::Warning, $message, $context);
     }
 
     /**
-     * @inheritDoc
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
      */
-    #[Override]
     public function error(Stringable|string $message, array $context = []): void
     {
         $this->log(LogLevel::Error, $message, $context);
     }
 
     /**
-     * @inheritDoc
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
      */
-    #[Override]
     public function critical(Stringable|string $message, array $context = []): void
     {
         $this->log(LogLevel::Critical, $message, $context);
     }
 
     /**
-     * @inheritDoc
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
      */
-    #[Override]
     public function alert(Stringable|string $message, array $context = []): void
     {
         $this->log(LogLevel::Alert, $message, $context);
     }
 
     /**
-     * @inheritDoc
+     * @param Stringable|string $message
+     * @param array<string, mixed> $context
+     * @return void
      */
-    #[Override]
     public function emergency(Stringable|string $message, array $context = []): void
     {
         $this->log(LogLevel::Emergency, $message, $context);

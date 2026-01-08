@@ -7,55 +7,44 @@ use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
 use Kirameki\Event\EventDispatcher;
-use Kirameki\Framework\Cli\CommandRegistry;
-use Kirameki\Framework\Cli\CommandRunner;
-use Kirameki\Framework\Crypto\NanoIdGenerator;
 use Kirameki\Framework\Foundation\AppEnv;
 use Kirameki\Framework\Foundation\AppLifeCycle;
 use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\ServiceInitializer;
-use Kirameki\Framework\Http\HttpServer;
 use Kirameki\Storage\Path;
-use Kirameki\System\Env;
 
-class App
+abstract class App
 {
-    /**
-     * @var string
-     */
-    public string $runId = '';
-
-    /**
-     * @var list<AppLifeCycle>
-     */
-    protected array $lifeCycles = [];
-
-    /**
-     * @var float
-     */
-    protected readonly float $startTimeSeconds;
-
     /**
      * @param Path $path
      * @param Container $container
+     * @param AppEnv $env
+     * @param Deployment $deployment
+     * @param string $runId
+     * @param list<class-string<ServiceInitializer>> $initializers
+     * @param list<AppLifeCycle> $lifeCycles
+     * @param float $startTimeSeconds
      */
     public function __construct(
         public readonly Path $path,
-        public readonly Container $container = new Container(),
+        public readonly Container $container,
+        public readonly AppEnv $env = new AppEnv(),
+        public readonly Deployment $deployment = new Deployment(),
+        public readonly string $runId = '',
+        protected array $initializers = [],
+        protected array $lifeCycles = [],
+        public readonly float $startTimeSeconds = 0.0,
     ) {
-        $this->startTimeSeconds = microtime(true);
     }
 
     /**
-     * @param array<class-string<ServiceInitializer>> $initializers
      * @return void
      */
-    public function boot(array $initializers): void
+    protected function boot(): void
     {
-        $this->injectEssentialServices();
-        $this->generateRunId();
-        $this->runInitializers($initializers);
+        $this->registerServices();
+        $this->initializeServices();
 
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->started($this);
@@ -65,7 +54,7 @@ class App
     /**
      * @return void
      */
-    public function terminate(): void
+    protected function terminate(): void
     {
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->terminating($this);
@@ -74,36 +63,6 @@ class App
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->terminated($this);
         }
-    }
-
-    /**
-     * @param array<string, mixed> $info
-     * @return void
-     */
-    public function handleHttp(array $info): void
-    {
-        $server = $this->container->get(HttpServer::class);
-        $this->withScope(static fn(AppScope $scope) => $server->run($scope, $info));
-    }
-
-    /**
-     * @param string $name
-     * @param list<string> $parameters
-     * @return int
-     */
-    public function runCommand(array $args): int
-    {
-        $runner = $this->container->make(CommandRunner::class);
-        return $this->withScope(static fn() => $runner->runFromArgs($args));
-    }
-
-    /**
-     * @param AppLifeCycle $service
-     * @return void
-     */
-    public function addLifeCycleService(AppLifeCycle $service): void
-    {
-        $this->lifeCycles[] = $service;
     }
 
     /**
@@ -123,63 +82,32 @@ class App
     /**
      * @return void
      */
-    protected function injectEssentialServices(): void
+    protected function registerServices(): void
     {
         $container = $this->container;
-        $container->instance(Container::class, $container);
+        $env = $this->env;
+
         $container->instance(App::class, $this);
-        $container->instance(AppEnv::class, $this->makeAppEnv(...));
-        $container->instance(Deployment::class, $this->makeDeployment(...));
+        $container->instance(AppEnv::class, $env);
+        $container->instance(Deployment::class, $this->deployment);
+        $container->instance(Container::class, $container);
         $container->instance(ClockInterface::class, new SystemClock());
         $container->instance(EventDispatcher::class, new EventDispatcher());
-        $container->instance(NanoIdGenerator::class, new NanoIdGenerator());
         $container->scoped(AppScope::class, fn() => new AppScope());
-        $container->singleton(CommandRegistry::class);
-        $container->singleton(HttpServer::class);
-    }
 
-    /**
-     * @return void
-     */
-    protected function generateRunId(): void
-    {
-        $this->runId = $this->container->get(NanoIdGenerator::class)->generate();
-    }
-
-    /**
-     * @param array<class-string<ServiceInitializer>> $initializers
-     * @return void
-     */
-    protected function runInitializers(array $initializers): void
-    {
-        $container = $this->container;
-        foreach ($initializers as $initializer) {
-            $container->make($initializer)->register($container);
+        foreach ($this->initializers as $initializer) {
+            $initializer::register($container, $env);
         }
     }
 
     /**
-     * @return AppEnv
+     * @return void
      */
-    protected function makeAppEnv(): AppEnv
+    protected function initializeServices(): void
     {
-        return new AppEnv(
-            $this->path,
-            Env::getBoolOrNull('DEVELOP_MODE') ?? false,
-            Env::getBoolOrNull('TEST_MODE') ?? false,
-        );
-    }
-
-    /**
-     * @return Deployment
-     */
-    protected function makeDeployment(): Deployment
-    {
-        return new Deployment(
-            Env::getString('NAMESPACE'),
-            Env::getStringOrNull('DEPLOYER') ?? 'unknown',
-            Env::getStringOrNull('REVISION') ?? 'unknown',
-            Env::getFloatOrNull('DEPLOY_TIME') ?? 0.0,
-        );
+        $container = $this->container;
+        foreach ($this->initializers as $initializer) {
+            $container->make($initializer)->initialize();
+        }
     }
 }

@@ -53,7 +53,7 @@ class ExceptionHandler
     {
         register_shutdown_function(function() {
             if($e = error_get_last()) {
-                $exception = new ErrorException($e['message'], 0, $e['type'], $e['file'], $e['line']);
+                $exception = new ErrorException($e['message'], 0, $e['file'], $e['line']);
                 $this->handleException($exception);
             }
         });
@@ -116,6 +116,10 @@ class ExceptionHandler
      */
     protected function fallback(Throwable $exception): void
     {
-        $this->fallbackReporter?->report($exception) ?? throw $exception;
+        if ($this->fallbackReporter !== null) {
+            $this->fallbackReporter->report($exception);
+        } else {
+            throw $exception;
+        }
     }
 }

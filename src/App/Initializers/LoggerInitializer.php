@@ -9,9 +9,9 @@ use Kirameki\Framework\Logging\Writers\ConsoleWriter;
 
 class LoggerInitializer extends LoggerInitializerBase
 {
-    protected function setup(LoggerBuilder $builder): void
+    protected function build(LoggerBuilder $builder): void
     {
         $builder
-            ->addWriter('console', new ConsoleWriter(LogLevel::Debug));
+            ->addWriter('console', new ConsoleWriter(LogLevel::Info));
     }
 }

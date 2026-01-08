@@ -12,10 +12,10 @@ abstract class LoggerInitializerBase extends ServiceInitializer
      * @inheritDoc
      */
     #[Override]
-    final public function register(Container $container): void
+    final public function initialize(): void
     {
-        $container->singleton(Logger::class, function(): Logger {
-            $this->setup($builder = new LoggerBuilder());
+        $this->container->singleton(Logger::class, function(): Logger {
+            $this->build($builder = new LoggerBuilder());
             return $builder->build();
         });
     }
@@ -24,6 +24,6 @@ abstract class LoggerInitializerBase extends ServiceInitializer
      * @param LoggerBuilder $builder
      * @return void
      */
-    abstract protected function setup(LoggerBuilder $builder): void;
+    abstract protected function build(LoggerBuilder $builder): void;
 
 }

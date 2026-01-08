@@ -12,10 +12,10 @@ abstract class ExceptionInitializerBase extends ServiceInitializer
      * @inheritDoc
      */
     #[Override]
-    final public function register(Container $container): void
+    final public function initialize(): void
     {
-        $container->singleton(ExceptionHandler::class, function () use ($container): ExceptionHandler {
-            $this->setup($builder = new ExceptionHandlerBuilder($container));
+        $this->container->singleton(ExceptionHandler::class, function (Container $container): ExceptionHandler {
+            $this->build($builder = new ExceptionHandlerBuilder($container));
             return $builder->build();
         });
     }
@@ -24,5 +24,5 @@ abstract class ExceptionInitializerBase extends ServiceInitializer
      * @param ExceptionHandlerBuilder $handler
      * @return void
      */
-    protected abstract function setup(ExceptionHandlerBuilder $handler): void;
+    protected abstract function build(ExceptionHandlerBuilder $handler): void;
 }

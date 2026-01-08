@@ -14,7 +14,7 @@ class CallbackHttpRoute extends HttpRoute
     /**
      * @param HttpMethod $method
      * @param string $path
-     * @param Closure(HttpRequest): HttpResponse $handler
+     * @param Closure(HttpContext): HttpResponse $handler
      */
     public function __construct(
         HttpMethod $method,

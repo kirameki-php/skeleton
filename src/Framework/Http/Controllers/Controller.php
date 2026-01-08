@@ -38,7 +38,7 @@ abstract class Controller
             $this->request->version,
             $statusCode,
             new HttpResponseHeaders(),
-            new HttpResponseBody($body ?? ''),
+            new HttpResponseBody(),
         );
     }
 }
