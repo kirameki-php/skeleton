@@ -3,6 +3,7 @@
 namespace Kirameki\Framework\Foundation;
 
 use Kirameki\Container\Container;
+use Kirameki\Container\ContainerBuilder;
 use Kirameki\Framework\App;
 use Kirameki\Framework\Console\CommandRegistry;
 use Kirameki\Framework\Http\Routing\HttpRouterBuilder;
@@ -29,12 +30,13 @@ abstract class ServiceInitializer
     }
 
     /**
-     * @param Container $container
+     * @param ContainerBuilder $container
      * @param AppEnv $env
      * @return void
      */
-    public static function register(Container $container, AppEnv $env): void
+    public static function register(ContainerBuilder $container, AppEnv $env): void
     {
+        // Override in subclass
     }
 
     /**
@@ -49,5 +51,8 @@ abstract class ServiceInitializer
     /**
      * @return void
      */
-    abstract public function initialize(): void;
+    public function initialize(): void
+    {
+        // Override in subclass
+    }
 }

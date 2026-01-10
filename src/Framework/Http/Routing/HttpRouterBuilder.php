@@ -12,7 +12,6 @@ use Kirameki\Framework\Http\Filters\RouteFilter;
 use Kirameki\Container\Container;
 use Kirameki\Framework\Http\HttpContext;
 use Kirameki\Http\HttpMethod;
-use Kirameki\Http\HttpRequest;
 use Kirameki\Http\HttpResponse;
 use function array_pop;
 use function explode;

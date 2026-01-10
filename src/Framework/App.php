@@ -43,9 +43,6 @@ abstract class App
      */
     protected function boot(): void
     {
-        $this->registerServices();
-        $this->initializeServices();
-
         foreach ($this->lifeCycles as $lifeCycle) {
             $lifeCycle->started($this);
         }
@@ -75,39 +72,7 @@ abstract class App
         try {
             return $call($this->container->get(AppScope::class));
         } finally {
-            $this->container->unsetScopedInstances();
-        }
-    }
-
-    /**
-     * @return void
-     */
-    protected function registerServices(): void
-    {
-        $container = $this->container;
-        $env = $this->env;
-
-        $container->instance(App::class, $this);
-        $container->instance(AppEnv::class, $env);
-        $container->instance(Deployment::class, $this->deployment);
-        $container->instance(Container::class, $container);
-        $container->instance(ClockInterface::class, new SystemClock());
-        $container->instance(EventDispatcher::class, new EventDispatcher());
-        $container->scoped(AppScope::class, fn() => new AppScope());
-
-        foreach ($this->initializers as $initializer) {
-            $initializer::register($container, $env);
-        }
-    }
-
-    /**
-     * @return void
-     */
-    protected function initializeServices(): void
-    {
-        $container = $this->container;
-        foreach ($this->initializers as $initializer) {
-            $container->make($initializer)->initialize();
+            $this->container->clearScoped();
         }
     }
 }

@@ -3,14 +3,14 @@
 namespace Kirameki\App\Initializers;
 
 use Kirameki\Framework\Exception\ExceptionHandlerBuilder;
-use Kirameki\Framework\Exception\ExceptionInitializerBase;
 use Kirameki\Framework\Exception\Reporters\LogReporter;
+use Kirameki\Framework\Foundation\ServiceInitializer;
 
-class ExceptionInitializer extends ExceptionInitializerBase
+class ExceptionInitializer extends ServiceInitializer
 {
-    protected function build(ExceptionHandlerBuilder $handler): void
+    public function initialize(): void
     {
-        $handler
+        $this->container->get(ExceptionHandlerBuilder::class)
             ->addReporter(LogReporter::class)
             ->addDeprecatedReporter(LogReporter::class)
             ->setFallbackReporter(LogReporter::class);

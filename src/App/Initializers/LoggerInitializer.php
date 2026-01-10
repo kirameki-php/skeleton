@@ -2,16 +2,16 @@
 
 namespace Kirameki\App\Initializers;
 
+use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Logging\LoggerBuilder;
-use Kirameki\Framework\Logging\LoggerInitializerBase;
 use Kirameki\Framework\Logging\LogLevel;
 use Kirameki\Framework\Logging\Writers\ConsoleWriter;
 
-class LoggerInitializer extends LoggerInitializerBase
+class LoggerInitializer extends ServiceInitializer
 {
-    protected function build(LoggerBuilder $builder): void
+    public function initialize(): void
     {
-        $builder
+        $this->container->get(LoggerBuilder::class)
             ->addWriter('console', new ConsoleWriter(LogLevel::Info));
     }
 }
