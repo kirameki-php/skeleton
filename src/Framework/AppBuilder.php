@@ -6,6 +6,9 @@ use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
 use Kirameki\Container\ContainerBuilder;
+use Kirameki\Container\Entry;
+use Kirameki\Container\EntryCollection;
+use Kirameki\Container\Lifetime;
 use Kirameki\Event\EventDispatcher;
 use Kirameki\Framework\Console\ConsoleInitializer;
 use Kirameki\Framework\Crypto\NanoIdGenerator;
@@ -13,10 +16,11 @@ use Kirameki\Framework\Exception\ExceptionHandler;
 use Kirameki\Framework\Exception\ExceptionHandlerBuilder;
 use Kirameki\Framework\Foundation\AppEnv;
 use Kirameki\Framework\Foundation\AppLifeCycle;
+use Kirameki\Framework\Foundation\AppRunner;
 use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\ServiceInitializer;
-use Kirameki\Framework\Http\WebInitializer;
+use Kirameki\Framework\Http\HttpInitializer;
 use Kirameki\Framework\Logging\Logger;
 use Kirameki\Framework\Logging\LoggerBuilder;
 use Kirameki\Storage\Path;
@@ -47,17 +51,17 @@ class AppBuilder
 
     /**
      * @param Path $path
-     * @param ContainerBuilder $containerBuilder
      * @param list<class-string<ServiceInitializer>> $initializers
      * @param list<AppLifeCycle> $lifeCycles
      * @param NanoIdGenerator $idGenerator
+     * @param class-string<AppRunner>|null $runnerClass
      */
     public function __construct(
         public readonly Path $path,
-        protected ContainerBuilder $containerBuilder = new ContainerBuilder(),
         protected array $initializers = [],
         protected array $lifeCycles = [],
         protected readonly NanoIdGenerator $idGenerator = new NanoIdGenerator(),
+        protected ?string $runnerClass = null,
     ) {
         $this->env = $this->instantiateAppEnv();
         $this->deployment = $this->instantiateDeployment();
@@ -65,51 +69,44 @@ class AppBuilder
         $this->startTimeSeconds = microtime(true);
 
         $this->addInitializer(ConsoleInitializer::class);
-        $this->addInitializer(WebInitializer::class);
+        $this->addInitializer(HttpInitializer::class);
     }
 
     /**
-     * @return ConsoleApp
+     * @return App
      */
-    public function buildForConsole(): ConsoleApp
+    public function build(): App
     {
-        return new ConsoleApp(
+        $entries = new EntryCollection();
+        $container =  $this->prepareContainer($entries);
+
+        $app = new App(
             $this->path,
-            $this->prepareContainer(),
+            $container,
             $this->env,
             $this->deployment,
             $this->runId,
-            $this->initializers,
+            $this->runnerClass,
             $this->lifeCycles,
             $this->startTimeSeconds,
         );
+
+        // Register App instance before initializing services
+        // so that services can use it during their initialization
+        $entries->set(new Entry(App::class, Lifetime::Singleton, null, $app));
+
+        $this->initializeServices($container);
+
+        return $app;
     }
 
-    /**
-     * @return WebApp
-     */
-    public function buildForWeb(): WebApp
+    protected function prepareContainer(EntryCollection $entries): Container
     {
-        return new WebApp(
-            $this->path,
-            $this->prepareContainer(),
-            $this->env,
-            $this->deployment,
-            $this->runId,
-            $this->initializers,
-            $this->lifeCycles,
-            $this->startTimeSeconds,
-        );
-    }
+        $builder = new ContainerBuilder($entries);
 
-    protected function prepareContainer(): Container
-    {
-        $builder = $this->containerBuilder;
         $this->registerServices($builder);
 
-        $container = $this->containerBuilder->build();
-        $this->initializeServices($container);
-        return $container;
+        return $builder->build();
     }
 
     /**
@@ -118,7 +115,6 @@ class AppBuilder
      */
     protected function registerServices(ContainerBuilder $builder): void
     {
-        $builder->instance(App::class, $this);
         $builder->instance(AppEnv::class, $this->env);
         $builder->instance(Deployment::class, $this->deployment);
         $builder->instance(ClockInterface::class, new SystemClock());
@@ -168,6 +164,16 @@ class AppBuilder
     }
 
     /**
+     * @param class-string<AppRunner> $runner
+     * @return $this
+     */
+    public function useRunner(string $runner): static
+    {
+        $this->runnerClass = $runner;
+        return $this;
+    }
+
+    /**
      * @return AppEnv
      */
     protected function instantiateAppEnv(): AppEnv
@@ -197,7 +203,7 @@ class AppBuilder
      */
     protected function buildLogger(Container $container): Logger
     {
-        return $container->pull(LoggerBuilder::class)->build();
+        return $container->get(LoggerBuilder::class)->build();
     }
 
     /**
@@ -206,7 +212,7 @@ class AppBuilder
      */
     protected function buildExceptionHandler(Container $container): ExceptionHandler
     {
-        return $container->pull(ExceptionHandlerBuilder::class)->build();
+        return $container->get(ExceptionHandlerBuilder::class)->build();
     }
 
     /**

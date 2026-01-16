@@ -1,5 +1,9 @@
 {
     frankenphp
+
+    log {
+        format console
+    }
 }
 
 :80 {
@@ -9,6 +13,7 @@
         worker scripts/http.php {
             match *
             watch
+            num 1
         }
     }
 }

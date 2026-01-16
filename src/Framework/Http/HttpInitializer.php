@@ -11,7 +11,7 @@ use Kirameki\Framework\Http\Routing\HttpRouter;
 use Kirameki\Framework\Http\Routing\HttpRouterBuilder;
 use Override;
 
-class WebInitializer extends ServiceInitializer
+class HttpInitializer extends ServiceInitializer
 {
     /**
      * @inheritDoc

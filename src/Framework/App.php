@@ -2,19 +2,15 @@
 
 namespace Kirameki\Framework;
 
-use Closure;
-use Kirameki\Clock\ClockInterface;
-use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
-use Kirameki\Event\EventDispatcher;
 use Kirameki\Framework\Foundation\AppEnv;
 use Kirameki\Framework\Foundation\AppLifeCycle;
-use Kirameki\Framework\Foundation\AppScope;
+use Kirameki\Framework\Foundation\AppRunner;
 use Kirameki\Framework\Foundation\Deployment;
-use Kirameki\Framework\Foundation\ServiceInitializer;
+use Kirameki\Framework\Http\HttpServer;
 use Kirameki\Storage\Path;
 
-abstract class App
+class App
 {
     /**
      * @param Path $path
@@ -22,20 +18,35 @@ abstract class App
      * @param AppEnv $env
      * @param Deployment $deployment
      * @param string $runId
-     * @param list<class-string<ServiceInitializer>> $initializers
+     * @param class-string<AppRunner> $runnerClass
      * @param list<AppLifeCycle> $lifeCycles
      * @param float $startTimeSeconds
      */
     public function __construct(
         public readonly Path $path,
         public readonly Container $container,
-        public readonly AppEnv $env = new AppEnv(),
-        public readonly Deployment $deployment = new Deployment(),
-        public readonly string $runId = '',
-        protected array $initializers = [],
+        public readonly AppEnv $env,
+        public readonly Deployment $deployment,
+        public readonly string $runId,
+        public readonly string $runnerClass,
         protected array $lifeCycles = [],
         public readonly float $startTimeSeconds = 0.0,
     ) {
+    }
+
+    /**
+     * @return int
+     */
+    public function run(): int
+    {
+        $this->boot();
+
+        $runner = $this->container->make($this->runnerClass);
+        $exitCode = $runner->run();
+
+        $this->terminate($exitCode);
+
+        return $exitCode;
     }
 
     /**
@@ -49,30 +60,17 @@ abstract class App
     }
 
     /**
+     * @param int $exitCode
      * @return void
      */
-    protected function terminate(): void
+    protected function terminate(int $exitCode): void
     {
         foreach ($this->lifeCycles as $lifeCycle) {
-            $lifeCycle->terminating($this);
+            $lifeCycle->terminating($this, $exitCode);
         }
 
         foreach ($this->lifeCycles as $lifeCycle) {
-            $lifeCycle->terminated($this);
-        }
-    }
-
-    /**
-     * @template TReturn of mixed
-     * @param Closure(AppScope): TReturn $call
-     * @return TReturn
-     */
-    protected function withScope(Closure $call): mixed
-    {
-        try {
-            return $call($this->container->get(AppScope::class));
-        } finally {
-            $this->container->clearScoped();
+            $lifeCycle->terminated($this, $exitCode);
         }
     }
 }

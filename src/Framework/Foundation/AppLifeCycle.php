@@ -8,7 +8,7 @@ interface AppLifeCycle
 {
     function started(App $app): void;
 
-    function terminating(App $app): void;
+    function terminating(App $app, int $exitCode): void;
 
-    function terminated(App $app): void;
+    function terminated(App $app, int $exitCode): void;
 }

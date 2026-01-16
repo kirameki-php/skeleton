@@ -33,4 +33,4 @@ mysql:
 	$(DOCKER_COMPOSE_COMMAND) exec mysql mysql
 
 logs:
-	$(DOCKER_COMPOSE_COMMAND) logs -f app
+	$(DOCKER_COMPOSE_COMMAND) logs --follow --no-log-prefix app

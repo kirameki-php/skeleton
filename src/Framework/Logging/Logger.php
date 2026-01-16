@@ -43,7 +43,7 @@ class Logger
      * @param Stringable|string $message
      * @param array<string, mixed> $context
      */
-    public function log($level, string|Stringable $message, array $context = []): void
+    public function log(LogLevel $level, string|Stringable $message, array $context = []): void
     {
         $time = microtime(true);
         foreach ($this->writers as $writer) {

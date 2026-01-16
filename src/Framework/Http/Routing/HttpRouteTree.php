@@ -7,6 +7,7 @@ use Kirameki\Http\HttpRequest;
 use function array_shift;
 use function compact;
 use function count;
+use function dump;
 use function explode;
 use function preg_match;
 use function str_ends_with;
@@ -64,12 +65,12 @@ final class HttpRouteTree
     {
         $part = array_shift($pathParts);
 
-        if ($part === null) {
+        if ($part === null || $part === '') {
             return $this->resource;
         }
 
         if (count($this->regexIndexMap) === 0) {
-            return $this->nodes[$part]->findRecursive($pathParts);
+            return $this->nodes[$part]?->findRecursive($pathParts);
         }
 
         $exactIndex = $this->exactIndexMap[$part] ?? PHP_INT_MAX;

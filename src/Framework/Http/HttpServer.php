@@ -2,7 +2,9 @@
 
 namespace Kirameki\Framework\Http;
 
+use Kirameki\Container\Container;
 use Kirameki\Framework\Foundation\AppScope;
+use Kirameki\Framework\Foundation\AppRunner;
 use Kirameki\Framework\Http\Events\RequestReceived;
 use Kirameki\Framework\Http\Events\ResponseSent;
 use Kirameki\Framework\Http\Routing\HttpRouter;
@@ -14,7 +16,11 @@ use Kirameki\Http\HttpRequestHeaders;
 use Kirameki\Http\HttpResponse;
 use Kirameki\Http\StatusCode;
 use Kirameki\Http\Url;
+use Kirameki\Process\ExitCode;
+use function dump;
 use function file_get_contents;
+use function frankenphp_handle_request;
+use function gc_collect_cycles;
 use function getallheaders;
 use function hrtime;
 use function pcntl_async_signals;
@@ -25,36 +31,55 @@ use function unlink;
 use const SIGINT;
 use const SIGTERM;
 
-class HttpServer
+class HttpServer extends AppRunner
 {
     /**
+     * @param Container $container
      * @param EventDispatcher $events
      * @param HttpRouter $router
      * @param list<int> $terminalSignals
      */
     public function __construct(
-        protected EventDispatcher $events,
-        protected HttpRouter $router,
+        Container $container,
+        protected readonly EventDispatcher $events,
+        protected readonly HttpRouter $router,
         array $terminalSignals = [SIGTERM, SIGINT],
     ) {
+        parent::__construct($container);
+
         $this->captureTerminalSignals($terminalSignals);
         $this->markAsReady();
     }
 
     /**
-     * @param AppScope $scope
-     * @param array<string, mixed> $info
+     * @param array<string, mixed> $serverInfo
+     * @return int
+     */
+    public function run(): int
+    {
+        $handler = fn() => $this->handle();
+
+        while (frankenphp_handle_request($handler)) {
+            gc_collect_cycles();
+        }
+
+        return ExitCode::SUCCESS;
+    }
+
+    /**
      * @return void
      */
-    public function run(AppScope $scope, array $info): void
+    public function handle(): void
     {
-        $request = $this->buildRequestFromEnvs($info);
-        $this->events->emit(new RequestReceived($request));
-        $then = hrtime(true);
-        $response = $this->router->dispatch($scope, $request);
-        $this->sendResponse($response);
-        $elapsedSeconds = (hrtime(true) - $then) / 1_000_000_000;
-        $this->events->emit(new ResponseSent($request, $response, $elapsedSeconds));
+        $this->withScope(function (AppScope $scope) {
+            $request = $this->buildRequestFromEnvs($_SERVER);
+            $this->events->emit(new RequestReceived($request));
+            $then = hrtime(true);
+            $response = $this->router->dispatch($scope, $request);
+            $this->sendResponse($response);
+            $elapsedSeconds = (hrtime(true) - $then) / 1_000_000_000;
+            $this->events->emit(new ResponseSent($request, $response, $elapsedSeconds));
+        });
     }
 
     /**

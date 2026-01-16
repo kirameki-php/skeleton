@@ -12,6 +12,7 @@ use Kirameki\Framework\Console\Exceptions\InvalidInputException;
 use Kirameki\Framework\Console\Parameters\ParameterParser;
 use Kirameki\Collections\Map;
 use Kirameki\Collections\Utils\Arr;
+use Kirameki\Framework\Foundation\AppRunner;
 use function array_shift;
 use function array_slice;
 use function assert;
@@ -19,7 +20,7 @@ use function preg_split;
 use const PREG_SPLIT_DELIM_CAPTURE;
 use const PREG_SPLIT_NO_EMPTY;
 
-class CommandRunner
+class CommandRunner extends AppRunner
 {
     /**
      * @param Container $container
@@ -29,12 +30,26 @@ class CommandRunner
      * @param ConsoleInput $input
      */
     public function __construct(
-        protected readonly Container $container,
+        Container $container,
         protected readonly CommandRegistry $registry,
         protected readonly EventDispatcher $events,
         protected readonly ConsoleOutput $output = new ConsoleOutput(),
         protected readonly ConsoleInput $input = new ConsoleInput(),
     ) {
+        parent::__construct($container);
+    }
+
+    /**
+     * @param list<string> $args
+     * @return int
+     */
+    public function run(): int
+    {
+        $args = $_SERVER['argv'] ?? [];
+        $name = $args[1] ?? '';
+        $parameters = array_slice($args, 2);
+
+        return $this->run($name, $parameters);
     }
 
     /**
@@ -59,23 +74,11 @@ class CommandRunner
     }
 
     /**
-     * @param list<string> $args
-     * @return int
-     */
-    public function runFromArgs(array $args): int
-    {
-        $name = $args[1] ?? '';
-        $parameters = array_slice($args, 2);
-
-        return $this->run($name, $parameters);
-    }
-
-    /**
      * @param string|class-string<Command> $name
      * @param iterable<int, string> $parameters
      * @return int
      */
-    public function run(string $name, iterable $parameters = []): int
+    public function execute(string $name, iterable $parameters = []): int
     {
         $events = $this->events;
 
