@@ -10,6 +10,8 @@ use Kirameki\Container\Entry;
 use Kirameki\Container\EntryCollection;
 use Kirameki\Container\Lifetime;
 use Kirameki\Event\EventDispatcher;
+use Kirameki\Exceptions\InvalidArgumentException;
+use Kirameki\Framework\Console\CommandRunner;
 use Kirameki\Framework\Console\ConsoleInitializer;
 use Kirameki\Framework\Crypto\NanoIdGenerator;
 use Kirameki\Framework\Exception\ExceptionHandler;
@@ -21,6 +23,7 @@ use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Http\HttpInitializer;
+use Kirameki\Framework\Http\HttpServer;
 use Kirameki\Framework\Logging\Logger;
 use Kirameki\Framework\Logging\LoggerBuilder;
 use Kirameki\Storage\Path;
@@ -169,8 +172,32 @@ class AppBuilder
      */
     public function useRunner(string $runner): static
     {
+        if (!is_subclass_of($runner, AppRunner::class)) {
+            throw new InvalidArgumentException("Runner must be a subclass of " . AppRunner::class);
+        }
+
+        if ($this->runnerClass !== null) {
+            throw new InvalidArgumentException("Runner has already been set to {$this->runnerClass}");
+        }
+
         $this->runnerClass = $runner;
         return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function useHttpRunner(): static
+    {
+        return $this->useRunner(HttpServer::class);
+    }
+
+    /**
+     * @return $this
+     */
+    public function useCommandRunner(): static
+    {
+        return $this->useRunner(CommandRunner::class);
     }
 
     /**

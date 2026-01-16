@@ -1,7 +1,6 @@
 <?php declare(strict_types=1);
 
 use Kirameki\Framework\AppBuilder;
-use Kirameki\Framework\Console\CommandRunner;
 
 ignore_user_abort(true);
 
@@ -9,7 +8,7 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 /** @var AppBuilder $builder */
 $builder = require __DIR__ . '/boot.php';
-$builder->useRunner(CommandRunner::class);
+$builder->useCommandRunner();
 
 $app = $builder->build();
 
