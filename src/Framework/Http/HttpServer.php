@@ -17,7 +17,6 @@ use Kirameki\Http\HttpResponse;
 use Kirameki\Http\StatusCode;
 use Kirameki\Http\Url;
 use Kirameki\Process\ExitCode;
-use function dump;
 use function file_get_contents;
 use function frankenphp_handle_request;
 use function gc_collect_cycles;
@@ -52,7 +51,6 @@ class HttpServer extends AppRunner
     }
 
     /**
-     * @param array<string, mixed> $serverInfo
      * @return int
      */
     public function run(): int

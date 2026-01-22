@@ -7,7 +7,10 @@
 }
 
 :80 {
-    encode zstd br gzip
+    encode {
+        zstd fastest
+        gzip 1
+    }
 
     php {
         worker scripts/http.php {

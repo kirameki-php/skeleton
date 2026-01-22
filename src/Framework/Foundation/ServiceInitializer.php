@@ -19,14 +19,14 @@ abstract class ServiceInitializer
      * @var HttpRouterBuilder
      */
     protected HttpRouterBuilder $router {
-        get => $this->router ??= $this->app->container->get(HttpRouterBuilder::class);
+        get => $this->router ??= $this->resolve(HttpRouterBuilder::class);
     }
 
     /**
      * @var CommandRegistry
      */
     protected CommandRegistry $commands {
-        get => $this->commands ??= $this->app->container->get(CommandRegistry::class);
+        get => $this->commands ??= $this->resolve(CommandRegistry::class);
     }
 
     /**
@@ -54,5 +54,15 @@ abstract class ServiceInitializer
     public function initialize(): void
     {
         // Override in subclass
+    }
+
+    /**
+     * @template T of object
+     * @param class-string<T> $id
+     * @return T
+     */
+    protected function resolve(string $id): object
+    {
+        return $this->container->get($id);
     }
 }

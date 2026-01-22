@@ -6,12 +6,10 @@ use Kirameki\Clock\ClockInterface;
 use Kirameki\Clock\SystemClock;
 use Kirameki\Container\Container;
 use Kirameki\Container\ContainerBuilder;
-use Kirameki\Container\Entry;
 use Kirameki\Container\EntryCollection;
-use Kirameki\Container\Lifetime;
+use Kirameki\Container\FixedEntry;
+use Kirameki\Database\DatabaseManager;
 use Kirameki\Event\EventDispatcher;
-use Kirameki\Exceptions\InvalidArgumentException;
-use Kirameki\Framework\Console\CommandRunner;
 use Kirameki\Framework\Console\ConsoleInitializer;
 use Kirameki\Framework\Crypto\NanoIdGenerator;
 use Kirameki\Framework\Exception\ExceptionHandler;
@@ -23,9 +21,9 @@ use Kirameki\Framework\Foundation\AppScope;
 use Kirameki\Framework\Foundation\Deployment;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Http\HttpInitializer;
-use Kirameki\Framework\Http\HttpServer;
 use Kirameki\Framework\Logging\Logger;
 use Kirameki\Framework\Logging\LoggerBuilder;
+use Kirameki\Framework\Model\ModelInitializer;
 use Kirameki\Storage\Path;
 use Kirameki\System\Env;
 use function microtime;
@@ -57,14 +55,12 @@ class AppBuilder
      * @param list<class-string<ServiceInitializer>> $initializers
      * @param list<AppLifeCycle> $lifeCycles
      * @param NanoIdGenerator $idGenerator
-     * @param class-string<AppRunner>|null $runnerClass
      */
     public function __construct(
         public readonly Path $path,
         protected array $initializers = [],
         protected array $lifeCycles = [],
         protected readonly NanoIdGenerator $idGenerator = new NanoIdGenerator(),
-        protected ?string $runnerClass = null,
     ) {
         $this->env = $this->instantiateAppEnv();
         $this->deployment = $this->instantiateDeployment();
@@ -73,6 +69,7 @@ class AppBuilder
 
         $this->addInitializer(ConsoleInitializer::class);
         $this->addInitializer(HttpInitializer::class);
+        $this->addInitializer(ModelInitializer::class);
     }
 
     /**
@@ -82,21 +79,12 @@ class AppBuilder
     {
         $entries = new EntryCollection();
         $container =  $this->prepareContainer($entries);
+        $app = new App($this->path, $container, $this->runId, $this->lifeCycles, $this->startTimeSeconds);
 
-        $app = new App(
-            $this->path,
-            $container,
-            $this->env,
-            $this->deployment,
-            $this->runId,
-            $this->runnerClass,
-            $this->lifeCycles,
-            $this->startTimeSeconds,
-        );
-
-        // Register App instance before initializing services
+        // Register Container and App instance before initializing services
         // so that services can use it during their initialization
-        $entries->set(new Entry(App::class, Lifetime::Singleton, null, $app));
+        $entries->set(Container::class, new FixedEntry($container));
+        $entries->set(App::class, new FixedEntry($app));
 
         $this->initializeServices($container);
 
@@ -129,6 +117,8 @@ class AppBuilder
 
         $builder->singleton(ExceptionHandlerBuilder::class);
         $builder->singleton(ExceptionHandler::class, $this->buildExceptionHandler(...));
+
+        $builder->singleton(DatabaseManager::class);
 
         foreach ($this->initializers as $initializer) {
             $initializer::register($builder, $this->env);
@@ -167,45 +157,12 @@ class AppBuilder
     }
 
     /**
-     * @param class-string<AppRunner> $runner
-     * @return $this
-     */
-    public function useRunner(string $runner): static
-    {
-        if (!is_subclass_of($runner, AppRunner::class)) {
-            throw new InvalidArgumentException("Runner must be a subclass of " . AppRunner::class);
-        }
-
-        if ($this->runnerClass !== null) {
-            throw new InvalidArgumentException("Runner has already been set to {$this->runnerClass}");
-        }
-
-        $this->runnerClass = $runner;
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function useHttpRunner(): static
-    {
-        return $this->useRunner(HttpServer::class);
-    }
-
-    /**
-     * @return $this
-     */
-    public function useCommandRunner(): static
-    {
-        return $this->useRunner(CommandRunner::class);
-    }
-
-    /**
      * @return AppEnv
      */
     protected function instantiateAppEnv(): AppEnv
     {
         return new AppEnv(
+            $this->path,
             Env::getString('NAMESPACE'),
             Env::getBoolOrNull('DEVELOP_MODE') ?? false,
             Env::getBoolOrNull('TEST_MODE') ?? false,

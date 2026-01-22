@@ -40,7 +40,6 @@ class CommandRunner extends AppRunner
     }
 
     /**
-     * @param list<string> $args
      * @return int
      */
     public function run(): int
@@ -49,7 +48,7 @@ class CommandRunner extends AppRunner
         $name = $args[1] ?? '';
         $parameters = array_slice($args, 2);
 
-        return $this->run($name, $parameters);
+        return $this->execute($name, $parameters);
     }
 
     /**
@@ -70,7 +69,7 @@ class CommandRunner extends AppRunner
             ]);
         }
 
-        return $this->run($name, $args);
+        return $this->execute($name, $args);
     }
 
     /**

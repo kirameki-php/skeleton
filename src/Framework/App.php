@@ -3,6 +3,8 @@
 namespace Kirameki\Framework;
 
 use Kirameki\Container\Container;
+use Kirameki\Exceptions\InvalidArgumentException;
+use Kirameki\Framework\Console\CommandRunner;
 use Kirameki\Framework\Foundation\AppEnv;
 use Kirameki\Framework\Foundation\AppLifeCycle;
 use Kirameki\Framework\Foundation\AppRunner;
@@ -13,25 +15,65 @@ use Kirameki\Storage\Path;
 class App
 {
     /**
+     * @var AppEnv
+     */
+    public AppEnv $env {
+        get => $this->env ??= $this->container->get(AppEnv::class);
+    }
+
+    public Deployment $deployment {
+        get => $this->deployment ??= $this->container->get(Deployment::class);
+    }
+
+    /**
+     * @var class-string<AppRunner>|null
+     */
+    public ?string $runnerClass = null;
+
+    /**
      * @param Path $path
      * @param Container $container
-     * @param AppEnv $env
-     * @param Deployment $deployment
      * @param string $runId
-     * @param class-string<AppRunner> $runnerClass
      * @param list<AppLifeCycle> $lifeCycles
      * @param float $startTimeSeconds
      */
     public function __construct(
         public readonly Path $path,
         public readonly Container $container,
-        public readonly AppEnv $env,
-        public readonly Deployment $deployment,
         public readonly string $runId,
-        public readonly string $runnerClass,
         protected array $lifeCycles = [],
         public readonly float $startTimeSeconds = 0.0,
     ) {
+    }
+
+    /**
+     * @param class-string<AppRunner> $runner
+     * @return $this
+     */
+    public function useRunner(string $runner): static
+    {
+        if ($this->runnerClass !== null) {
+            throw new InvalidArgumentException("Runner has already been set to {$this->runnerClass}");
+        }
+
+        $this->runnerClass = $runner;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function useHttpRunner(): static
+    {
+        return $this->useRunner(HttpServer::class);
+    }
+
+    /**
+     * @return $this
+     */
+    public function useCommandRunner(): static
+    {
+        return $this->useRunner(CommandRunner::class);
     }
 
     /**
@@ -40,6 +82,10 @@ class App
     public function run(): int
     {
         $this->boot();
+
+        if ($this->runnerClass === null) {
+            throw new InvalidArgumentException('Runner class has not been set.');
+        }
 
         $runner = $this->container->make($this->runnerClass);
         $exitCode = $runner->run();
