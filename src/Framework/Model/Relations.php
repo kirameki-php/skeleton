@@ -2,9 +2,8 @@
 
 namespace Kirameki\Framework\Model;
 
-/**
- * @mixin Model
- */
+use Kirameki\Collections\Utils\Arr;
+
 trait Relations
 {
     /**
@@ -62,9 +61,9 @@ trait Relations
      * @template TModel of Model
      * @param Model $srcModels
      * @param string $name
-     * @return ModelVec<int, Model>
+     * @return ModelQueryResult<int, Model>
      */
-    protected function loadRelation(iterable $srcModels, string $name): ModelVec
+    protected function loadRelation(iterable $srcModels, string $name): ModelQueryResult
     {
         return static::getReflection()->relations[$name]->load($srcModels);
     }
@@ -84,7 +83,7 @@ trait Relations
      */
     public function preload(string|array $relationNames): static
     {
-        return $this->preloadRecursive([$this], Arr::wrap($relationNames));
+        return $this->preloadRecursive([$this], (array)($relationNames));
     }
 
     /**
@@ -102,7 +101,7 @@ trait Relations
         } else {
             foreach ($names as $name => $inner) {
                 $models = $this->loadRelation($target, $name);
-                $this->preloadRecursive($models, Arr::wrap($inner));
+                $this->preloadRecursive($models, (array)($inner));
             }
         }
         return $this;

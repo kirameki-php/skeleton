@@ -14,7 +14,7 @@ class ModelReflection
      * @param class-string<TModel> $class
      * @param string $connectionName
      * @param string $tableName
-     * @param string $primaryKey
+     * @param list<string> $primaryKeys
      * @param array<string, Property> $properties
      * @param array<string, Relation<Model, Model>> $relations
      */
@@ -22,7 +22,7 @@ class ModelReflection
         public readonly string $class,
         public readonly string $connectionName,
         public readonly string $tableName,
-        public readonly string $primaryKey,
+        public readonly array $primaryKeys,
         public readonly array $properties = [],
         public readonly array $relations = [],
     ) {

@@ -70,7 +70,9 @@ final class HttpRouteTree
         }
 
         if (count($this->regexIndexMap) === 0) {
-            return $this->nodes[$part]->findRecursive($pathParts);
+            return isset($this->nodes[$part])
+                ? $this->nodes[$part]->findRecursive($pathParts)
+                : null;
         }
 
         $exactIndex = $this->exactIndexMap[$part] ?? PHP_INT_MAX;

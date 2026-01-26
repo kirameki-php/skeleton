@@ -2,13 +2,13 @@
 
 namespace Kirameki\Framework\Model\Relations;
 
-use Closure;
 use Kirameki\Collections\Map;
 use Kirameki\Collections\Vec;
 use Kirameki\Framework\Model\Model;
 use Kirameki\Framework\Model\ModelManager;
-use Kirameki\Framework\Model\ModelVec;
+use Kirameki\Framework\Model\ModelQueryResult;
 use Kirameki\Framework\Model\ModelReflection;
+use Kirameki\Framework\Model\QueryBuilder;
 
 /**
  * @template TSrc of Model
@@ -52,11 +52,6 @@ abstract class Relation
     protected ?string $inverse;
 
     /**
-     * @var array<int, Closure>
-     */
-    protected array $scopes;
-
-    /**
      * @param ModelManager $manager
      * @param string $name
      * @param ModelReflection<TSrc> $srcReflection
@@ -64,7 +59,7 @@ abstract class Relation
      * @param array<string, string> $keyPairs should look like [$srcKeyName => $dstKeyName, ...]
      * @param string|null $inverse
      */
-    public function __construct(ModelManager $manager, string $name, ModelReflection $srcReflection, string $dstClass, array $keyPairs = null, ?string $inverse = null)
+    public function __construct(ModelManager $manager, string $name, ModelReflection $srcReflection, string $dstClass, ?array $keyPairs = null, ?string $inverse = null)
     {
         $this->manager = $manager;
         $this->name = $name;
@@ -155,23 +150,10 @@ abstract class Relation
     }
 
     /**
-     * @param string|Closure(QueryBuilder<TDst>, ModelVec<int, TSrc>): QueryBuilder<TDst> $scope
-     * @return $this
-     */
-    public function scope(string|Closure $scope): static
-    {
-        $this->scopes[] = is_string($scope)
-            ? $this->getDstReflection()->scopes[$scope]
-            : $scope;
-
-        return $this;
-    }
-
-    /**
      * @param iterable<int, TSrc> $srcModels
-     * @return ModelVec<TDst>
+     * @return ModelQueryResult<TDst>
      */
-    public function load(iterable $srcModels): ModelVec
+    public function load(iterable $srcModels): ModelQueryResult
     {
         $srcModels = $this->srcModelsToCollection($srcModels);
         $dstModels = $this->getDstModels($srcModels);
@@ -188,11 +170,11 @@ abstract class Relation
 
     /**
      * @param iterable<int, TSrc> $srcModels
-     * @return ModelVec<TSrc>
+     * @return ModelQueryResult<TSrc>
      */
-    protected function srcModelsToCollection(iterable $srcModels): ModelVec
+    protected function srcModelsToCollection(iterable $srcModels): ModelQueryResult
     {
-        if ($srcModels instanceof ModelVec) {
+        if ($srcModels instanceof ModelQueryResult) {
             return $srcModels;
         }
 
@@ -200,19 +182,18 @@ abstract class Relation
             $srcModels = $srcModels->all();
         }
 
-        return new ModelVec($this->srcReflection, $srcModels);
+        return new ModelQueryResult($this->getSrcReflection(), $srcModels);
     }
 
     /**
-     * @param ModelVec<TSrc> $srcModels
-     * @return ModelVec<TDst>
+     * @param ModelQueryResult<TSrc> $srcModels
+     * @return ModelQueryResult<TDst>
      */
-    protected function getDstModels(ModelVec $srcModels): ModelVec
+    protected function getDstModels(ModelQueryResult $srcModels): ModelQueryResult
     {
         $query = $this->newQuery();
         $this->addConstraintsToQuery($query, $srcModels);
-        $this->addScopesToQuery($query, $srcModels);
-        return $query->all();
+        return new ModelQueryResult($this->getDstReflection(), $query->execute());
     }
 
     /**
@@ -220,15 +201,15 @@ abstract class Relation
      */
     protected function newQuery(): QueryBuilder
     {
-        return new QueryBuilder($this->manager->getDatabaseManager(), $this->getDstReflection());
+        return new QueryBuilder($this->manager->getDb(), $this->getDstReflection());
     }
 
     /**
      * @param QueryBuilder<TDst> $query
-     * @param ModelVec<TSrc> $srcModels
+     * @param ModelQueryResult<TSrc> $srcModels
      * @return void
      */
-    protected function addConstraintsToQuery(QueryBuilder $query, ModelVec $srcModels): void
+    protected function addConstraintsToQuery(QueryBuilder $query, ModelQueryResult $srcModels): void
     {
         foreach ($this->keyPairs as $srcName => $dstName) {
             $srcKeys = $srcModels->pluck($srcName)->filter(fn($v) => $v !== null);
@@ -237,21 +218,9 @@ abstract class Relation
     }
 
     /**
-     * @param QueryBuilder<TDst> $query
-     * @param ModelVec<TSrc> $srcModels
-     * @return void
-     */
-    protected function addScopesToQuery(QueryBuilder $query, ModelVec $srcModels): void
-    {
-        foreach ($this->scopes as $scope) {
-            $scope($query, $srcModels);
-        }
-    }
-
-    /**
      * @param TSrc $srcModel
-     * @param ModelVec<TDst> $dstModels
+     * @param ModelQueryResult<TDst> $dstModels
      * @return void
      */
-    abstract protected function setDstToSrc(Model $srcModel, ModelVec $dstModels): void;
+    abstract protected function setDstToSrc(Model $srcModel, ModelQueryResult $dstModels): void;
 }

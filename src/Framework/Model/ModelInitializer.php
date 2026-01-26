@@ -2,6 +2,8 @@
 
 namespace Kirameki\Framework\Model;
 
+use Kirameki\Container\ContainerBuilder;
+use Kirameki\Framework\Foundation\AppEnv;
 use Kirameki\Framework\Foundation\ServiceInitializer;
 use Kirameki\Framework\Model\Casts\BoolCast;
 use Kirameki\Framework\Model\Casts\InstantCast;
@@ -12,6 +14,11 @@ use Kirameki\Framework\Model\Casts\StringCast;
 
 class ModelInitializer extends ServiceInitializer
 {
+    public static function register(ContainerBuilder $container, AppEnv $env): void
+    {
+        $container->singleton(ModelManager::class);
+    }
+
     public function initialize(): void
     {
         $models = $this->container->get(ModelManager::class);

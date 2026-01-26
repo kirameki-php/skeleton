@@ -3,15 +3,15 @@
 namespace Kirameki\Framework\Model\Relations;
 
 use Kirameki\Framework\Model\Model;
-use Kirameki\Framework\Model\ModelVec;
+use Kirameki\Framework\Model\ModelQueryResult;
 use Kirameki\Framework\Model\ModelReflection;
 
 /**
  * @template TSrc of Model
  * @template TDst of Model
- * @extends ModelVec<int, TDst>
+ * @extends ModelQueryResult<int, TDst>
  */
-class RelationVec extends ModelVec
+class RelationQueryResult extends ModelQueryResult
 {
     /**
      * @var Relation<TSrc, TDst>

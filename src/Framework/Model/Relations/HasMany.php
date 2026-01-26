@@ -4,6 +4,7 @@ namespace Kirameki\Framework\Model\Relations;
 
 use Kirameki\Framework\Model\Model;
 use Kirameki\Framework\Model\ModelManager;
+use Kirameki\Framework\Model\ModelQueryResult;
 use Kirameki\Framework\Model\ModelReflection;
 
 /**
@@ -21,7 +22,7 @@ class HasMany extends Relation
      * @param array<string, string> $keyPairs should look like [$srcKeyName => $dstKeyName, ...]
      * @param string|null $inverse
      */
-    public function __construct(ModelManager $manager, string $name, ModelReflection $srcReflection, string $dstClass, array $keyPairs = null, ?string $inverse = null)
+    public function __construct(ModelManager $manager, string $name, ModelReflection $srcReflection, string $dstClass, ?array $keyPairs = null, ?string $inverse = null)
     {
         parent::__construct($manager, $name, $srcReflection, $dstClass, $keyPairs, $inverse);
     }
@@ -31,17 +32,17 @@ class HasMany extends Relation
      */
     protected function guessKeyPairs(): array
     {
-        $srcKeyName = $this->getSrcReflection()->primaryKey;
-        $dstKeyName = lcfirst(class_basename($this->getSrcReflection()->class)).'Id';
+        $srcKeyName = $this->getSrcReflection()->primaryKeys;
+        $dstKeyName = lcfirst($this->getSrcReflection()->class->getTable()).'Id';
         return [$srcKeyName => $dstKeyName];
     }
 
     /**
      * @param TSrc $srcModel
-     * @param ModelCollection<int, TDst> $dstModels
+     * @param ModelQueryResult<TDst> $dstModels
      * @return void
      */
-    protected function setDstToSrc(Model $srcModel, ModelCollection $dstModels): void
+    protected function setDstToSrc(Model $srcModel, ModelQueryResult $dstModels): void
     {
         $srcModel->setRelation($this->getName(), $this->toRelationCollection($srcModel, $dstModels));
         $this->setInverseRelations($srcModel, $dstModels);
@@ -50,11 +51,11 @@ class HasMany extends Relation
     /**
      * @param TSrc $srcModel
      * @param ModelCollection<int, TDst> $destModels
-     * @return RelationVec<TSrc, TDst>
+     * @return RelationQueryResult<TSrc, TDst>
      */
-    protected function toRelationCollection(Model $srcModel, ModelCollection $destModels): RelationVec
+    protected function toRelationCollection(Model $srcModel, ModelCollection $destModels): RelationQueryResult
     {
-        return new RelationVec($this, $srcModel, $this->getDstReflection(), $destModels);
+        return new RelationQueryResult($this, $srcModel, $this->getDstReflection(), $destModels);
     }
 
     /**

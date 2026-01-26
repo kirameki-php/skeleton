@@ -3,7 +3,7 @@
 namespace Kirameki\Framework\Model\Relations;
 
 use Kirameki\Framework\Model\Model;
-use Kirameki\Framework\Model\ModelVec;
+use Kirameki\Framework\Model\ModelQueryResult;
 
 /**
  * @template TSrc of Model
@@ -17,17 +17,17 @@ class HasOne extends Relation
      */
     protected function guessKeyPairs(): array
     {
-        $srcKeyName = $this->getSrcReflection()->primaryKey;
-        $dstKeyName = lcfirst(class_basename($this->getSrcReflection()->class)).'Id';
+        $srcKeyName = $this->getSrcReflection()->primaryKeys;
+        $dstKeyName = lcfirst($this->getSrcReflection()->class->getTable()).'Id';
         return [$srcKeyName => $dstKeyName];
     }
 
     /**
      * @param TSrc $srcModel
-     * @param ModelVec<TDst> $dstModels
+     * @param ModelQueryResult<TDst> $dstModels
      * @return void
      */
-    protected function setDstToSrc(Model $srcModel, ModelVec $dstModels): void
+    protected function setDstToSrc(Model $srcModel, ModelQueryResult $dstModels): void
     {
         $destModel = $dstModels[0];
         $srcModel->setRelation($this->getName(), $destModel);

@@ -1,131 +1,70 @@
 <?php declare(strict_types=1);
 
-namespace Kirameki\Model;
+namespace Kirameki\Framework\Model;
 
-use Kirameki\Database\DatabaseManager;
-use Kirameki\Database\Query\Builders\SelectBuilder;
-use Kirameki\Database\Query\Support\SortOrder;
-use Kirameki\Model\Paginators\CursorPaginator;
-use Kirameki\Model\Paginators\OffsetPaginator;
-use RuntimeException;
+use Kirameki\Database\Query\QueryResult;
+use Kirameki\Database\Query\Statements\SelectBuilder;
+use Kirameki\Database\Query\Statements\SelectStatement;
 
 /**
- * @template T of Model
+ * @template TModel of Model
+ * @extends SelectBuilder<TModel>
  */
 class QueryBuilder extends SelectBuilder
 {
     /**
-     * @var Reflection<T>
+     * @param TModel $model
      */
-    protected Reflection $reflection;
-
-    /**
-     * @param DatabaseManager $db
-     * @param Reflection<T> $reflection
-     */
-    public function __construct(DatabaseManager $db, Reflection $reflection)
-    {
-        $connection = $db->using($reflection->connectionName);
-        parent::__construct($connection);
-        $this->reflection = $reflection;
-
-        $this->from($reflection->tableName);
+    public function __construct(
+        protected readonly Model $model,
+    ) {
+        parent::__construct($model->getConnection()->query());
     }
 
     /**
-     * @return ModelCollection<int, T>
+     * @return QueryResult<SelectStatement, TModel>
      */
-    public function all(): ModelCollection
+    public function execute(): QueryResult
     {
-        $reflection = $this->reflection;
-        $results = $this->execute();
-        $models = $results->map(static fn(array $result) => $reflection->makeModel($result, true));
-        return new ModelCollection($reflection, $models);
+        return $this->hydrate(parent::execute());
+    }
+    /**
+     * @return TModel
+     */
+    public function first(): mixed
+    {
+        return $this
+            ->hydrate($this->copy()->limit(1)->execute())
+            ->first();
     }
 
     /**
-     * @return T
+     * @return TModel|null
      */
-    public function first(): Model
+    public function firstOrNull(): mixed
     {
-        return $this->firstOrNull() ?? throw new RuntimeException('No record found for query: '.$this->toSql());
+        return $this
+            ->hydrate($this->copy()->limit(1)->execute())
+            ->firstOrNull();
     }
 
     /**
-     * @return T|null
+     * @return TModel
      */
-    public function firstOrNull(): ?Model
+    public function single(): mixed
     {
-        $result = $this->copy()->limit(1)->execute()->firstOr(null);
-        return $result !== null
-            ? $this->reflection->makeModel($result, true)
-            : null;
+        return $this
+            ->hydrate($this->copy()->limit(2)->execute())
+            ->single();
     }
 
     /**
-     * @param int $per
-     * @param int $page
-     * @return OffsetPaginator<T>
+     * @param QueryResult<SelectStatement, TModel> $result
+     * @return ModelQueryResult<TModel>
      */
-    public function offsetPaginate(int $per, int $page): OffsetPaginator
+    protected function hydrate(QueryResult $result): ModelQueryResult
     {
-        $models = $this->offset($per * $page)->limit($per)->all();
-        $totalRows = (int) $this->count();
-        return new OffsetPaginator($models, $totalRows, $per, $page);
-    }
-
-    /**
-     * @param int $per
-     * @param string|null $cursor
-     * @return ModelCollection<int, T>
-     */
-    public function cursorPaginate(int $per, ?string $cursor): ModelCollection
-    {
-        $orderBy = $this->statement->orderBy ?? [];
-
-        if (count($orderBy) === 0) {
-            throw new RuntimeException("Cursor pagination requires at least one column in ORDER BY");
-        }
-
-        if ($cursor !== null) {
-            $column = array_key_first($orderBy);
-            $operator = $orderBy[$column] === SortOrder::Ascending ? '<' : '>';
-            $this->where($column, $operator, $cursor);
-        }
-
-        $models = $this->limit($per + 1)->all();
-
-        $nextCursor = $models->pop();
-
-        return new CursorPaginator($models);
-    }
-
-    /**
-     * @param mixed ...$args
-     * @return $this
-     */
-    public function where(mixed ...$args): static
-    {
-        $num = count($args);
-
-        [$column, $operator, $value] = $args;
-
-        if (is_string($column)) {
-            if ($num === 2 && $operator instanceof Model) {
-                $dstModel = $operator;
-            }
-            elseif ($num === 3 && $value instanceof Model && ($operator === null || $operator === '=')) {
-                $dstModel = $value;
-            }
-
-            if (isset($dstModel) && $relation = $this->reflection->relations[$column] ?? false) {
-                foreach ($relation->getKeyPairs() as $srcKeyName => $dstKeyName) {
-                    parent::where($srcKeyName, $dstModel->getProperty($dstKeyName));
-                }
-                return $this;
-            }
-        }
-
-        return parent::where(...$args);
+        /** @var ModelQueryResult<TModel> */
+        return new ModelQueryResult($this->model::getReflection(), $result);
     }
 }

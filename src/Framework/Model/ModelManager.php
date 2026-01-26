@@ -10,11 +10,6 @@ use LogicException;
 class ModelManager
 {
     /**
-     * @var DatabaseManager
-     */
-    protected DatabaseManager $databaseManager;
-
-    /**
      * @var array<class-string, ModelReflection<Model>>
      */
     protected array $reflections;
@@ -28,22 +23,6 @@ class ModelManager
      * @var array<string, Closure(string): Cast>
      */
     protected array $resolvers = [];
-
-    /**
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(DatabaseManager $databaseManager)
-    {
-        $this->databaseManager = $databaseManager;
-    }
-
-    /**
-     * @return DatabaseManager
-     */
-    public function getDatabaseManager(): DatabaseManager
-    {
-        return $this->databaseManager;
-    }
 
     /**
      * @template T of Model
