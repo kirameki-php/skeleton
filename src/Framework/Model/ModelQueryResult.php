@@ -12,15 +12,15 @@ use Kirameki\Database\Query\Statements\SelectStatement;
 class ModelQueryResult extends QueryResult
 {
     /**
-     * @var ModelReflection<TModel>
+     * @var TableInfo<TModel>
      */
-    protected ModelReflection $reflection;
+    protected TableInfo $reflection;
 
     /**
-     * @param ModelReflection<TModel> $reflection
+     * @param TableInfo<TModel> $reflection
      * @param QueryResult<SelectStatement, TModel> $result
      */
-    public function __construct(ModelReflection $reflection, QueryResult $result)
+    public function __construct(TableInfo $reflection, QueryResult $result)
     {
         parent::__construct(
             $result->statement,

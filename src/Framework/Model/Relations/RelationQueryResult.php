@@ -4,7 +4,7 @@ namespace Kirameki\Framework\Model\Relations;
 
 use Kirameki\Framework\Model\Model;
 use Kirameki\Framework\Model\ModelQueryResult;
-use Kirameki\Framework\Model\ModelReflection;
+use Kirameki\Framework\Model\TableInfo;
 
 /**
  * @template TSrc of Model
@@ -31,10 +31,10 @@ class RelationQueryResult extends ModelQueryResult
     /**
      * @param Relation<TSrc, TDst> $relation
      * @param TSrc $srcModel
-     * @param ModelReflection<TDst> $dstReflection
+     * @param TableInfo<TDst> $dstReflection
      * @param iterable<int, TDst> $dstModels
      */
-    public function __construct(Relation $relation, Model $srcModel, ModelReflection $dstReflection, iterable $dstModels)
+    public function __construct(Relation $relation, Model $srcModel, TableInfo $dstReflection, iterable $dstModels)
     {
         parent::__construct($dstReflection, $dstModels);
         $this->relation = $relation;

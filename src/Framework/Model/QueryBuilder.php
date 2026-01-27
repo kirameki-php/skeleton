@@ -65,6 +65,6 @@ class QueryBuilder extends SelectBuilder
     protected function hydrate(QueryResult $result): ModelQueryResult
     {
         /** @var ModelQueryResult<TModel> */
-        return new ModelQueryResult($this->model::getReflection(), $result);
+        return new ModelQueryResult($this->model->reflection, $result);
     }
 }

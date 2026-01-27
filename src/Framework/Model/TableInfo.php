@@ -8,23 +8,23 @@ use Kirameki\Framework\Model\Relations\Relation;
 /**
  * @template TModel of Model
  */
-class ModelReflection
+class TableInfo
 {
     /**
      * @param class-string<TModel> $class
-     * @param string $connectionName
-     * @param string $tableName
+     * @param string $connection
+     * @param string $table
      * @param list<string> $primaryKeys
-     * @param array<string, Property> $properties
+     * @param array<string, ColumnInfo> $columns
      * @param array<string, Relation<Model, Model>> $relations
      */
     public function __construct(
         public readonly string $class,
-        public readonly string $connectionName,
-        public readonly string $tableName,
-        public readonly array $primaryKeys,
-        public readonly array $properties = [],
-        public readonly array $relations = [],
+        public readonly string $connection,
+        public readonly string $table,
+        public readonly array  $primaryKeys,
+        public readonly array  $columns = [],
+        public readonly array  $relations = [],
     ) {
     }
 

@@ -11,16 +11,11 @@ use Kirameki\Framework\Model\Model;
 class EnumCast implements Cast
 {
     /**
-     * @var class-string<T>
-     */
-    public string $class;
-
-    /**
      * @param class-string<T> $class
      */
-    public function __construct(string $class)
-    {
-        $this->class = $class;
+    public function __construct(
+        public readonly string $class,
+    ) {
     }
 
     /**

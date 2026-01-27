@@ -10,6 +10,9 @@ use Kirameki\Framework\Model\Casts\Cast;
  */
 abstract class Model
 {
+    /** @use Recordable<static> */
+    use Recordable;
+
     /**
      * This has raw values that come directly from the database.
      * For example, the datetime values are stored as string

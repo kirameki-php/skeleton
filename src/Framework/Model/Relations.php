@@ -54,7 +54,7 @@ trait Relations
      */
     public function isRelation(string $name): bool
     {
-        return isset(static::getReflection()->relations[$name]);
+        return isset($this->reflection->relations[$name]);
     }
 
     /**
@@ -65,7 +65,7 @@ trait Relations
      */
     protected function loadRelation(iterable $srcModels, string $name): ModelQueryResult
     {
-        return static::getReflection()->relations[$name]->load($srcModels);
+        return $this->reflection->relations[$name]->load($srcModels);
     }
 
     /**

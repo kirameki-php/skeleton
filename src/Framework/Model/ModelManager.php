@@ -10,11 +10,6 @@ use LogicException;
 class ModelManager
 {
     /**
-     * @var array<class-string, ModelReflection<Model>>
-     */
-    protected array $reflections;
-
-    /**
      * @var array<string, Cast>
      */
     protected array $casts = [];
@@ -27,11 +22,11 @@ class ModelManager
     /**
      * @template T of Model
      * @param class-string<T> $class
-     * @return ModelReflection<T>
+     * @return TableInfo<T>
      */
-    public function reflect(string $class): ModelReflection
+    public function getTableInfo(string $class): TableInfo
     {
-        return $this->reflections[$class] ??= $class::getReflection(); /** @phpstan-ignore-line */
+        return $class::getTableInfo();
     }
 
     /**

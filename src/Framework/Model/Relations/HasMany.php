@@ -5,7 +5,7 @@ namespace Kirameki\Framework\Model\Relations;
 use Kirameki\Framework\Model\Model;
 use Kirameki\Framework\Model\ModelManager;
 use Kirameki\Framework\Model\ModelQueryResult;
-use Kirameki\Framework\Model\ModelReflection;
+use Kirameki\Framework\Model\TableInfo;
 
 /**
  * @template TSrc of Model
@@ -17,12 +17,12 @@ class HasMany extends Relation
     /**
      * @param ModelManager $manager
      * @param string $name
-     * @param ModelReflection<TSrc> $srcReflection
+     * @param TableInfo<TSrc> $srcReflection
      * @param class-string<TDst> $dstClass
      * @param array<string, string> $keyPairs should look like [$srcKeyName => $dstKeyName, ...]
      * @param string|null $inverse
      */
-    public function __construct(ModelManager $manager, string $name, ModelReflection $srcReflection, string $dstClass, ?array $keyPairs = null, ?string $inverse = null)
+    public function __construct(ModelManager $manager, string $name, TableInfo $srcReflection, string $dstClass, ?array $keyPairs = null, ?string $inverse = null)
     {
         parent::__construct($manager, $name, $srcReflection, $dstClass, $keyPairs, $inverse);
     }

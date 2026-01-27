@@ -5,16 +5,20 @@ namespace Kirameki\Framework\Model;
 use Closure;
 use Kirameki\Database\Connection;
 use Kirameki\Exceptions\RuntimeException;
+use Kirameki\Framework\Model\Attributes\Table;
 use Kirameki\Framework\Model\Casts\Cast;
+use ReflectionClass;
+use ReflectionProperty;
 
-abstract class DatabaseRecord extends Model
+/**
+ * @template TModel of Model
+ */
+trait Recordable
 {
-    use Relations;
-
     /**
-     * @var ModelReflection<static>|null
+     * @var TableInfo<TModel>|null
      */
-    protected static ?ModelReflection $reflection = null;
+    protected static ?TableInfo $tableInfo;
 
     /**
      * @var bool
@@ -27,19 +31,33 @@ abstract class DatabaseRecord extends Model
     protected bool $_processing = false;
 
     /**
-     * @return ModelReflection<static>
+     * @return TableInfo<TModel>
      */
-    public static function getReflection(): ModelReflection
+    public static function getTableInfo(): TableInfo
     {
-        return static::$reflection ??= static::resolveReflection();
+        return static::$tableInfo ??= static::resolveReflection();
     }
 
     /**
-     * @return ModelReflection<static>
+     * @return TableInfo<TModel>
      */
-    protected static function resolveReflection(): ModelReflection
+    protected static function resolveReflection(): TableInfo
     {
-        return new ModelReflection(static::class);
+        $classRef = new ReflectionClass(static::class);
+        $table = $classRef->getAttributes(Table::class)[0] ?? null;
+
+        $columns = [];
+        foreach ($classRef->getProperties(ReflectionProperty::IS_PUBLIC) as $ref) {
+            $columns[$ref->name] = ColumnInfo::fromReflection($ref);
+        }
+
+        return new TableInfo(
+            static::class,
+            $table->connection ?? 'default',
+            $table->name ?? $classRef->getShortName(),
+            [],
+            $columns,
+        );
     }
 
     /**
@@ -47,7 +65,7 @@ abstract class DatabaseRecord extends Model
      */
     public function getConnection(): Connection
     {
-        return $this->db->use(static::getReflection()->connectionName);
+        return $this->db->use(static::getTableInfo()->connection);
     }
 
     /**
@@ -55,7 +73,7 @@ abstract class DatabaseRecord extends Model
      */
     public function getTable(): string
     {
-        return static::getReflection()->tableName;
+        return static::getTableInfo()->table;
     }
 
     /**
@@ -64,7 +82,7 @@ abstract class DatabaseRecord extends Model
      */
     public function getCast(string $name): Cast
     {
-        return static::getReflection()->properties[$name]->cast;
+        return static::getTableInfo()->columns[$name]->cast;
     }
 
     /**
@@ -72,7 +90,7 @@ abstract class DatabaseRecord extends Model
      */
     public function getPrimaryKeyNames(): array
     {
-        return static::getReflection()->primaryKeys;
+        return static::getTableInfo()->primaryKeys;
     }
 
     /**
@@ -88,7 +106,7 @@ abstract class DatabaseRecord extends Model
      */
     public function getPropertyNames(): array
     {
-        return array_keys(static::getReflection()->properties);
+        return array_keys(static::getTableInfo()->columns);
     }
 
     /**
@@ -112,10 +130,6 @@ abstract class DatabaseRecord extends Model
 
             $this->setDirtyPropertiesAsPersisted();
             $this->clearDirtyProperties();
-
-            foreach ($this->getRelations() as $relation) {
-                $relation->save();
-            }
         });
 
         return $this;

@@ -7,7 +7,7 @@ use Kirameki\Collections\Vec;
 use Kirameki\Framework\Model\Model;
 use Kirameki\Framework\Model\ModelManager;
 use Kirameki\Framework\Model\ModelQueryResult;
-use Kirameki\Framework\Model\ModelReflection;
+use Kirameki\Framework\Model\TableInfo;
 use Kirameki\Framework\Model\QueryBuilder;
 
 /**
@@ -27,14 +27,14 @@ abstract class Relation
     protected string $name;
 
     /**
-     * @var ModelReflection<TSrc>
+     * @var TableInfo<TSrc>
      */
-    protected ModelReflection $srcReflection;
+    protected TableInfo $srcReflection;
 
     /**
-     * @var ModelReflection<TDst>|null
+     * @var TableInfo<TDst>|null
      */
-    protected ?ModelReflection $dstReflection;
+    protected ?TableInfo $dstReflection;
 
     /**
      * @var class-string<TDst>
@@ -54,12 +54,12 @@ abstract class Relation
     /**
      * @param ModelManager $manager
      * @param string $name
-     * @param ModelReflection<TSrc> $srcReflection
+     * @param TableInfo<TSrc> $srcReflection
      * @param class-string<TDst> $dstClass
      * @param array<string, string> $keyPairs should look like [$srcKeyName => $dstKeyName, ...]
      * @param string|null $inverse
      */
-    public function __construct(ModelManager $manager, string $name, ModelReflection $srcReflection, string $dstClass, ?array $keyPairs = null, ?string $inverse = null)
+    public function __construct(ModelManager $manager, string $name, TableInfo $srcReflection, string $dstClass, ?array $keyPairs = null, ?string $inverse = null)
     {
         $this->manager = $manager;
         $this->name = $name;
@@ -92,9 +92,9 @@ abstract class Relation
     abstract protected function guessKeyPairs(): array;
 
     /**
-     * @return ModelReflection<TSrc>
+     * @return TableInfo<TSrc>
      */
-    public function getSrcReflection(): ModelReflection
+    public function getSrcReflection(): TableInfo
     {
         return $this->srcReflection;
     }
@@ -117,11 +117,11 @@ abstract class Relation
     }
 
     /**
-     * @return ModelReflection<TDst>
+     * @return TableInfo<TDst>
      */
-    public function getDstReflection(): ModelReflection
+    public function getDstReflection(): TableInfo
     {
-        return $this->dstReflection ??= $this->manager->reflect($this->dstClass);
+        return $this->dstReflection ??= $this->manager->getTableInfo($this->dstClass);
     }
 
     /**
