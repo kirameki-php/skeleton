@@ -5,21 +5,13 @@ namespace Kirameki\Framework\Model;
 use Closure;
 use Kirameki\Database\Connection;
 use Kirameki\Exceptions\RuntimeException;
-use Kirameki\Framework\Model\Attributes\Table;
 use Kirameki\Framework\Model\Casts\Cast;
-use ReflectionClass;
-use ReflectionProperty;
 
 /**
  * @template TModel of Model
  */
 trait Recordable
 {
-    /**
-     * @var TableInfo<TModel>|null
-     */
-    protected static ?TableInfo $tableInfo;
-
     /**
      * @var bool
      */
@@ -31,41 +23,11 @@ trait Recordable
     protected bool $_processing = false;
 
     /**
-     * @return TableInfo<TModel>
-     */
-    public static function getTableInfo(): TableInfo
-    {
-        return static::$tableInfo ??= static::resolveReflection();
-    }
-
-    /**
-     * @return TableInfo<TModel>
-     */
-    protected static function resolveReflection(): TableInfo
-    {
-        $classRef = new ReflectionClass(static::class);
-        $table = $classRef->getAttributes(Table::class)[0] ?? null;
-
-        $columns = [];
-        foreach ($classRef->getProperties(ReflectionProperty::IS_PUBLIC) as $ref) {
-            $columns[$ref->name] = ColumnInfo::fromReflection($ref);
-        }
-
-        return new TableInfo(
-            static::class,
-            $table->connection ?? 'default',
-            $table->name ?? $classRef->getShortName(),
-            [],
-            $columns,
-        );
-    }
-
-    /**
      * @return Connection
      */
     public function getConnection(): Connection
     {
-        return $this->db->use(static::getTableInfo()->connection);
+        return $this->db->use($this->tableInfo->connection);
     }
 
     /**
@@ -73,7 +35,7 @@ trait Recordable
      */
     public function getTable(): string
     {
-        return static::getTableInfo()->table;
+        return $this->tableInfo->name;
     }
 
     /**
@@ -82,7 +44,7 @@ trait Recordable
      */
     public function getCast(string $name): Cast
     {
-        return static::getTableInfo()->columns[$name]->cast;
+        return $this->tableInfo->columns[$name]->cast;
     }
 
     /**
@@ -90,7 +52,7 @@ trait Recordable
      */
     public function getPrimaryKeyNames(): array
     {
-        return static::getTableInfo()->primaryKeys;
+        return $this->tableInfo->primaryKeys;
     }
 
     /**
@@ -99,14 +61,6 @@ trait Recordable
     public function getPrimaryKeys(): array
     {
         return array_map($this->getProperty(...), $this->getPrimaryKeyNames());
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function getPropertyNames(): array
-    {
-        return array_keys(static::getTableInfo()->columns);
     }
 
     /**

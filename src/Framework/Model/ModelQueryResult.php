@@ -12,16 +12,13 @@ use Kirameki\Database\Query\Statements\SelectStatement;
 class ModelQueryResult extends QueryResult
 {
     /**
-     * @var TableInfo<TModel>
-     */
-    protected TableInfo $reflection;
-
-    /**
-     * @param TableInfo<TModel> $reflection
+     * @param class-string<TModel> $class
      * @param QueryResult<SelectStatement, TModel> $result
      */
-    public function __construct(TableInfo $reflection, QueryResult $result)
-    {
+    public function __construct(
+        protected string $class,
+        QueryResult $result,
+    ) {
         parent::__construct(
             $result->statement,
             $result->template,
@@ -30,8 +27,6 @@ class ModelQueryResult extends QueryResult
             $result->affectedRowCount,
             $result->items,
         );
-
-        $this->reflection = $reflection;
     }
 
     /**
@@ -40,7 +35,7 @@ class ModelQueryResult extends QueryResult
      */
     public function newInstance(mixed $items): static
     {
-        return new static($this->reflection, $items);
+        return new static($this->class, $items);
     }
 
     /**
@@ -49,7 +44,7 @@ class ModelQueryResult extends QueryResult
      */
     public function make(array $properties = []): Model
     {
-        $model = $this->reflection->makeModel($properties);
+        $model = new $this->class($properties);
         $this->append($model);
         return $model;
     }

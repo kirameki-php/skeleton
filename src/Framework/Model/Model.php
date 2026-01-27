@@ -3,7 +3,6 @@
 namespace Kirameki\Framework\Model;
 
 use Kirameki\Database\DatabaseManager;
-use Kirameki\Framework\Model\Casts\Cast;
 
 /**
  * @consistent-constructor
@@ -51,20 +50,14 @@ abstract class Model
     public protected(set) bool $_persisted = false;
 
     /**
-     * @param ModelManager $manager
      * @param DatabaseManager $db
+     * @param TableInfo $tableInfo
      */
     public function __construct(
-        protected ModelManager $manager,
-        protected DatabaseManager $db,
+        protected readonly DatabaseManager $db,
+        protected readonly TableInfo $tableInfo,
     ) {
     }
-
-    /**
-     * @param string $name
-     * @return Cast
-     */
-    abstract protected function getCast(string $name): Cast;
 
     /**
      * @param string $name
@@ -113,7 +106,10 @@ abstract class Model
     /**
      * @return list<string>
      */
-    abstract public function getPropertyNames(): array;
+    public function getPropertyNames(): array
+    {
+        return array_keys($this->tableInfo->columns);
+    }
 
     /**
      * @return array<string, mixed>

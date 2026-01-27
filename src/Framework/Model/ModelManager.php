@@ -3,7 +3,6 @@
 namespace Kirameki\Framework\Model;
 
 use Closure;
-use Kirameki\Database\DatabaseManager;
 use Kirameki\Framework\Model\Casts\Cast;
 use LogicException;
 
@@ -18,16 +17,6 @@ class ModelManager
      * @var array<string, Closure(string): Cast>
      */
     protected array $resolvers = [];
-
-    /**
-     * @template T of Model
-     * @param class-string<T> $class
-     * @return TableInfo<T>
-     */
-    public function getTableInfo(string $class): TableInfo
-    {
-        return $class::getTableInfo();
-    }
 
     /**
      * @param string $name

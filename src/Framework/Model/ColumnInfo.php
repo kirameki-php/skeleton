@@ -10,15 +10,15 @@ use ReflectionProperty;
 
 final class ColumnInfo
 {
-    public static function fromReflection(ReflectionProperty $ref): self
+    public static function fromReflection(ModelManager $casts, ReflectionProperty $ref): self
     {
         $column = $ref->getAttributes(Column::class)[0] ?? null;
         $columnName = $column->name ?? $ref->name;
-
-        return new self($columnName, self::resolveCast($ref));
+        $type = self::getCastType($ref);
+        return new self($columnName, $casts->getCast($type));
     }
 
-    protected static function resolveCast(ReflectionProperty $ref): Cast
+    protected static function getCastType(ReflectionProperty $ref): string
     {
         $type = $ref->getType();
 
@@ -26,7 +26,7 @@ final class ColumnInfo
             throw new InvalidArgumentException("Column attributed must have a single named type.");
         }
 
-        $typeName = $type->getName();
+        return $type->getName();
     }
 
     /**
