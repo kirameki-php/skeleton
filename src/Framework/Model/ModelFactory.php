@@ -3,6 +3,8 @@
 namespace Kirameki\Framework\Model;
 
 use Kirameki\App\Models\User;
+use Kirameki\Container\Container;
+use Kirameki\Database\Connection;
 use Kirameki\Database\DatabaseManager;
 use Kirameki\Framework\Model\Attributes\Table;
 use ReflectionClass;
@@ -11,23 +13,35 @@ use ReflectionProperty;
 class ModelFactory
 {
     public function __construct(
+        protected readonly Container $container,
+        protected readonly Connection $connection,
         protected readonly ModelManager $casts,
-        protected readonly DatabaseManager $db,
     ) {
     }
 
     /**
-     * @return QueryBuilder<User>
+     * @return SelectBuilder<User>
      */
-    public function users(): QueryBuilder
+    public function users(): SelectBuilder
     {
-        $this->users()->first()->id;
-
-        return new QueryBuilder(
-            new User($this->db, $this->getTableInfo(User::class))
+        return new SelectBuilder(
+            $this->generate(User::class),
+            fn() => $this->generate(User::class),
         );
     }
 
+    /**
+     * @template TModel of Model
+     * @param class-string<TModel> $class
+     * @return TModel
+     */
+    public function generate(string $class): object
+    {
+        return $this->container->make($class, [
+            'db' => $this->container->get(DatabaseManager::class),
+            'table' => $this->getTableInfo(User::class),
+        ]);
+    }
 
     /**
      * @template TModel of Model

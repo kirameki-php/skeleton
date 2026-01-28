@@ -27,15 +27,7 @@ trait Recordable
      */
     public function getConnection(): Connection
     {
-        return $this->db->use($this->tableInfo->connection);
-    }
-
-    /**
-     * @return string
-     */
-    public function getTable(): string
-    {
-        return $this->tableInfo->name;
+        return $this->db->use($this->table->connection);
     }
 
     /**
@@ -44,15 +36,7 @@ trait Recordable
      */
     public function getCast(string $name): Cast
     {
-        return $this->tableInfo->columns[$name]->cast;
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function getPrimaryKeyNames(): array
-    {
-        return $this->tableInfo->primaryKeys;
+        return $this->table->columns[$name]->cast;
     }
 
     /**
@@ -60,7 +44,7 @@ trait Recordable
      */
     public function getPrimaryKeys(): array
     {
-        return array_map($this->getProperty(...), $this->getPrimaryKeyNames());
+        return array_map($this->getProperty(...), $this->table->primaryKeys);
     }
 
     /**
@@ -70,13 +54,13 @@ trait Recordable
     {
         if ($this->isDeleted()) {
             throw new RuntimeException(sprintf('Trying to save record which was deleted! (%s:%s)',
-                $this->getTable(),
-                implode(', ', $this->getPrimaryKeyNames())),
+                $this->table->name,
+                implode(', ', $this->table->primaryKeys)),
             );
         }
 
         $this->processing(function(Connection $conn) {
-            $table = $this->getTable();
+            $table = $this->table->name;
 
             $this->isNewRecord()
                 ? $conn->query()->insertInto($table)->value($this->getPropertiesForInsert())->execute()
@@ -123,16 +107,16 @@ trait Recordable
         }
 
         // trying to delete a record with dirty primary key is dangerous.
-        foreach ($this->getPrimaryKeyNames() as $primaryKeyName) {
+        foreach ($this->table->primaryKeys as $primaryKeyName) {
             if ($this->isDirty($primaryKeyName)) {
                 throw new RuntimeException('Deleting a record with dirty primary key is not allowed.'); // TODO Better exception handling
             }
         }
 
         $this->processing(function(Connection $conn) {
-            $query = $conn->query()->deleteFrom($this->getTable());
+            $query = $conn->query()->deleteFrom($this->table->name);
 
-            foreach ($this->getPrimaryKeyNames() as $primaryKeyName) {
+            foreach ($this->table->primaryKeys as $primaryKeyName) {
                 $query->where($primaryKeyName, $this->getProperty($primaryKeyName));
             }
             $result = $query->execute();

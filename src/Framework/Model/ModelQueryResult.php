@@ -2,22 +2,25 @@
 
 namespace Kirameki\Framework\Model;
 
+use Closure;
 use Kirameki\Database\Query\QueryResult;
 use Kirameki\Database\Query\Statements\SelectStatement;
+use Traversable;
 
 /**
  * @template TModel of Model
  * @extends QueryResult<SelectStatement, TModel>
+ * @consistent-constructor
  */
 class ModelQueryResult extends QueryResult
 {
     /**
-     * @param class-string<TModel> $class
      * @param QueryResult<SelectStatement, TModel> $result
+     * @param Closure(): TModel $generator
      */
     public function __construct(
-        protected string $class,
         QueryResult $result,
+        protected Closure $generator,
     ) {
         parent::__construct(
             $result->statement,
@@ -30,23 +33,31 @@ class ModelQueryResult extends QueryResult
     }
 
     /**
-     * @param Model $items
+     * @inheritDoc
+     */
+    public function getIterator(): Traversable
+    {
+        foreach (parent::getIterator() as $item) {
+            yield $this->newFromQueryRow((array) $item);
+        }
+    }
+
+    /**
+     * @param static $iterable
      * @return static
      */
-    public function newInstance(mixed $items): static
+    public function instantiate(mixed $iterable): static
     {
-        return new static($this->class, $items);
+        return new static($iterable, $this->generator);
     }
 
     /**
      * @param array<string, mixed> $properties
-     * @return Model
+     * @return TModel
      */
     public function make(array $properties = []): Model
     {
-        $model = new $this->class($properties);
-        $this->append($model);
-        return $model;
+        return $this->newFromQueryRow($properties);
     }
 
     /**
@@ -55,7 +66,7 @@ class ModelQueryResult extends QueryResult
      */
     protected function newFromQueryRow(array $row): Model
     {
-        $model = $this->reflection->makeModel();
+        $model = ($this->generator)();
         $model->setPersistedProperties($row);
         return $model;
     }

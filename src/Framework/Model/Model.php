@@ -51,11 +51,11 @@ abstract class Model
 
     /**
      * @param DatabaseManager $db
-     * @param TableInfo $tableInfo
+     * @param TableInfo $table
      */
     public function __construct(
         protected readonly DatabaseManager $db,
-        protected readonly TableInfo $tableInfo,
+        public readonly TableInfo $table,
     ) {
     }
 
@@ -86,6 +86,10 @@ abstract class Model
         return $value;
     }
 
+    /**
+     * @param string $name
+     * @return mixed
+     */
     protected function getPersistedProperty(string $name): mixed
     {
         return array_key_exists($name, $this->_persistedProperties)
@@ -108,7 +112,7 @@ abstract class Model
      */
     public function getPropertyNames(): array
     {
-        return array_keys($this->tableInfo->columns);
+        return array_keys($this->table->columns);
     }
 
     /**
