@@ -4,7 +4,7 @@ namespace Kirameki\Framework\Model\Attributes;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
 class Column
 {
     public function __construct(public string $name) {}

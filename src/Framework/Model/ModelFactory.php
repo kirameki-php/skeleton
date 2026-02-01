@@ -4,7 +4,7 @@ namespace Kirameki\Framework\Model;
 
 use Kirameki\App\Models\User;
 use Kirameki\Container\Container;
-use Kirameki\Database\Connection;
+use Kirameki\Database\DatabaseConnection;
 use Kirameki\Database\DatabaseManager;
 use Kirameki\Framework\Model\Attributes\Table;
 use ReflectionClass;
@@ -14,17 +14,17 @@ class ModelFactory
 {
     public function __construct(
         protected readonly Container $container,
-        protected readonly Connection $connection,
+        protected readonly DatabaseConnection $connection,
         protected readonly ModelManager $casts,
     ) {
     }
 
     /**
-     * @return SelectBuilder<User>
+     * @return ModelQueryBuilder<User>
      */
-    public function users(): SelectBuilder
+    public function users(): ModelQueryBuilder
     {
-        return new SelectBuilder(
+        return new ModelQueryBuilder(
             $this->generate(User::class),
             fn() => $this->generate(User::class),
         );

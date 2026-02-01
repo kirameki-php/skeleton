@@ -3,7 +3,7 @@
 namespace Kirameki\Framework\Model;
 
 use Closure;
-use Kirameki\Database\Connection;
+use Kirameki\Database\DatabaseConnection;
 use Kirameki\Exceptions\RuntimeException;
 use Kirameki\Framework\Model\Casts\Cast;
 
@@ -23,9 +23,9 @@ trait Recordable
     protected bool $_processing = false;
 
     /**
-     * @return Connection
+     * @return DatabaseConnection
      */
-    public function getConnection(): Connection
+    public function getConnection(): DatabaseConnection
     {
         return $this->db->use($this->table->connection);
     }
@@ -59,7 +59,7 @@ trait Recordable
             );
         }
 
-        $this->processing(function(Connection $conn) {
+        $this->processing(function(DatabaseConnection $conn) {
             $table = $this->table->name;
 
             $this->isNewRecord()
@@ -113,7 +113,7 @@ trait Recordable
             }
         }
 
-        $this->processing(function(Connection $conn) {
+        $this->processing(function(DatabaseConnection $conn) {
             $query = $conn->query()->deleteFrom($this->table->name);
 
             foreach ($this->table->primaryKeys as $primaryKeyName) {
@@ -129,7 +129,7 @@ trait Recordable
     }
 
     /**
-     * @param Closure(Connection): mixed $callback
+     * @param Closure(DatabaseConnection): mixed $callback
      */
     protected function processing(Closure $callback): void
     {

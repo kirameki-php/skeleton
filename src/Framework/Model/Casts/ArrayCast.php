@@ -16,7 +16,7 @@ class ArrayCast implements Cast
     /**
      * @param Model $model
      * @param string $key
-     * @param string $value
+     * @param mixed $value
      * @return array<array-key, mixed>
      */
     public function get(Model $model, string $key, mixed $value): array

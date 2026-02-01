@@ -11,6 +11,7 @@ use Kirameki\Framework\Model\Casts\EnumCast;
 use Kirameki\Framework\Model\Casts\FloatCast;
 use Kirameki\Framework\Model\Casts\IntCast;
 use Kirameki\Framework\Model\Casts\StringCast;
+use Kirameki\Time\Instant;
 
 class ModelInitializer extends ServiceInitializer
 {
@@ -26,7 +27,6 @@ class ModelInitializer extends ServiceInitializer
         $models->setCast('int', static fn() => new IntCast());
         $models->setCast('float', static fn() => new FloatCast());
         $models->setCast('string', static fn() => new StringCast());
-        $models->setCast('instant', static fn() => new InstantCast());
-        $models->setCast('{enum}', static fn(string $name) => new EnumCast($name));
+        $models->setCast(Instant::class, static fn() => new InstantCast());
     }
 }

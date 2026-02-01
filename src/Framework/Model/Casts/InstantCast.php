@@ -13,11 +13,11 @@ class InstantCast implements Cast
     /**
      * @param Model $model
      * @param string $key
-     * @param scalar|Stringable $value
+     * @param int|float|string|Stringable $value
      * @return Instant
      */
     public function get(Model $model, string $key, mixed $value): Instant
     {
-        return new Instant(new DateTimeImmutable($value));
+        return new Instant(new DateTimeImmutable((string) $value));
     }
 }

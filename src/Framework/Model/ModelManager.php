@@ -2,8 +2,10 @@
 
 namespace Kirameki\Framework\Model;
 
+use BackedEnum;
 use Closure;
 use Kirameki\Framework\Model\Casts\Cast;
+use Kirameki\Framework\Model\Casts\EnumCast;
 use LogicException;
 
 class ModelManager
@@ -32,8 +34,8 @@ class ModelManager
             return $this->casts[$name] = $this->resolvers[$name]($name);
         }
 
-        if (enum_exists($name)) {
-            return $this->casts[$name] = $this->resolvers['{enum}']($name);
+        if (enum_exists($name) && is_subclass_of($name, BackedEnum::class)) {
+            return $this->casts[$name] = new EnumCast($name);
         }
 
         throw new LogicException('Unknown cast:' .$name);

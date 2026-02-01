@@ -4,11 +4,8 @@ namespace Kirameki\Framework\Model\Attributes;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
 class PrimaryKey
 {
-    /**
-     * @param list<string> $names
-     */
-    public function __construct(public array $names) {}
+    public function __construct(public ?int $position = null) {}
 }
