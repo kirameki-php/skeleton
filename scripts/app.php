@@ -5,6 +5,7 @@ use Kirameki\App\Initializers\ExceptionInitializer;
 use Kirameki\App\Initializers\LoggerInitializer;
 use Kirameki\App\Initializers\RoutingInitializer;
 use Kirameki\Framework\AppBuilder;
+use Kirameki\Framework\Model\ModelInitializer;
 use Kirameki\Storage\Path;
 
 return new AppBuilder(Path::of(dirname(__DIR__)))
@@ -12,4 +13,5 @@ return new AppBuilder(Path::of(dirname(__DIR__)))
     ->addInitializer(LoggerInitializer::class)
     ->addInitializer(RoutingInitializer::class)
     ->addInitializer(DatabaseInitializer::class)
+    ->addInitializer(ModelInitializer::class)
     ->build();

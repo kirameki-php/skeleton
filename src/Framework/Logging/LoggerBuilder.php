@@ -2,10 +2,11 @@
 
 namespace Kirameki\Framework\Logging;
 
+use Kirameki\Container\Builder;
 use Kirameki\Exceptions\InvalidArgumentException;
 use Kirameki\Framework\Logging\Writers\LogWriter;
 
-class LoggerBuilder
+class LoggerBuilder implements Builder
 {
     /**
      * @param array<string, LogWriter> $writers

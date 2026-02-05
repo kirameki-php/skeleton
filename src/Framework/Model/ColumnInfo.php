@@ -10,12 +10,12 @@ use ReflectionProperty;
 
 final class ColumnInfo
 {
-    public static function fromReflection(ModelManager $casts, ReflectionProperty $ref): self
+    public static function fromReflection(TypeCasterCollection $casters, ReflectionProperty $ref): self
     {
         $column = $ref->getAttributes(Column::class)[0] ?? null;
-        $columnName = $column->name ?? $ref->name;
-        $type = self::getCastType($ref);
-        return new self($columnName, $casts->getCast($type));
+        $name = $column->name ?? $ref->name;
+        $caster = $casters->get(self::getCastType($ref));
+        return new self($name, $caster);
     }
 
     protected static function getCastType(ReflectionProperty $ref): string

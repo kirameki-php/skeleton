@@ -10,13 +10,13 @@ use Kirameki\Framework\Foundation\ServiceInitializer;
 
 class DatabaseInitializer extends ServiceInitializer
 {
-    public static function register(ContainerBuilder $container, AppEnv $env): void
+    public function initialize(): void
     {
-        $container->singleton(DatabaseConfig::class, function () use ($env) {
+        $this->container->singleton(DatabaseConfig::class, function () {
             return new DatabaseConfig(
                 [
                     'default' => new SqliteConfig(
-                        "{$env->path}/storage/database.sqlite"
+                        "{$this->app->path}/storage/database.sqlite"
                     ),
                 ],
             );

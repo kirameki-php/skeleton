@@ -2,50 +2,30 @@
 
 namespace Kirameki\Framework\Foundation;
 
+use Closure;
+use Kirameki\Container\Builder;
 use Kirameki\Container\Container;
 use Kirameki\Container\ContainerBuilder;
-use Kirameki\Framework\App;
+use Kirameki\Exceptions\LogicException;
+use Kirameki\Exceptions\RuntimeException;
+use Kirameki\Framework\AppBuilder;
 use Kirameki\Framework\Console\CommandRegistry;
-use Kirameki\Framework\Http\Routing\HttpRouterBuilder;
+use ReflectionFunction;
+use ReflectionNamedType;
 
 abstract class ServiceInitializer
 {
     /**
-     * @var Container
-     */
-    protected Container $container;
-
-    /**
-     * @var HttpRouterBuilder
-     */
-    protected HttpRouterBuilder $router {
-        get => $this->router ??= $this->resolve(HttpRouterBuilder::class);
-    }
-
-    /**
-     * @var CommandRegistry
-     */
-    protected CommandRegistry $commands {
-        get => $this->commands ??= $this->resolve(CommandRegistry::class);
-    }
-
-    /**
+     * @param AppBuilder $app
      * @param ContainerBuilder $container
-     * @param AppEnv $env
+     * @param CommandRegistry $commands
      * @return void
      */
-    public static function register(ContainerBuilder $container, AppEnv $env): void
-    {
-        // Override in subclass
-    }
-
-    /**
-     * @param App $app
-     */
-    public function __construct(
-        protected App $app,
+    final public function __construct(
+        protected readonly AppBuilder $app,
+        protected readonly ContainerBuilder $container,
+        protected readonly CommandRegistry $commands,
     ) {
-        $this->container = $app->container;
     }
 
     /**
@@ -57,12 +37,38 @@ abstract class ServiceInitializer
     }
 
     /**
-     * @template T of object
-     * @param class-string<T> $id
-     * @return T
+     * @template TBuilder of Builder
+     * @param Closure(TBuilder): mixed $callback
+     * @return $this
      */
-    protected function resolve(string $id): object
+    protected function configure(Closure $callback): static
     {
-        return $this->container->get($id);
+        $builderClass = $this->getClassFromClosure($callback);
+        $this->container->configure($builderClass, $callback);
+        return $this;
+    }
+
+    /**
+     * @template TBuilder of Builder
+     * @param Closure(TBuilder): mixed $callback
+     * @return class-string<TBuilder>
+     */
+    protected function getClassFromClosure(Closure $callback): string
+    {
+        $reflection = new ReflectionFunction($callback);
+        $params = $reflection->getParameters();
+        if (count($params) === 0) {
+            throw new RuntimeException("Closure must accept at least one parameter.");
+        }
+        $paramType = $params[0]->getType();
+        if (!$paramType instanceof ReflectionNamedType) {
+            throw new LogicException("Closure's first parameter must be a class type.");
+        }
+        $name = $paramType->getName();
+        if (!is_a($name, Builder::class, true)) {
+            throw new LogicException("Closure's first parameter must be a class implementing Builder interface.");
+        }
+        /** @var class-string<TBuilder> */
+        return $name;
     }
 }

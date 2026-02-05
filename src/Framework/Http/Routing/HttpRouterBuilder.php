@@ -3,6 +3,7 @@
 namespace Kirameki\Framework\Http\Routing;
 
 use Closure;
+use Kirameki\Container\Builder;
 use Kirameki\Framework\Http\Controllers\Controller;
 use Kirameki\Framework\Http\Controllers\Health\LivenessController;
 use Kirameki\Framework\Http\Controllers\Health\ReadinessController;
@@ -18,7 +19,7 @@ use function explode;
 use function implode;
 use function trim;
 
-class HttpRouterBuilder
+class HttpRouterBuilder implements Builder
 {
     /**
      * @param Container $container

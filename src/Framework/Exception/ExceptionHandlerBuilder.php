@@ -2,11 +2,12 @@
 
 namespace Kirameki\Framework\Exception;
 
+use Kirameki\Container\Builder;
 use Kirameki\Container\Container;
 use Kirameki\Framework\Exception\Reporters\Reporter;
 use function is_string;
 
-class ExceptionHandlerBuilder
+class ExceptionHandlerBuilder implements Builder
 {
     /**
      * @var list<Reporter>

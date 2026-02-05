@@ -11,14 +11,14 @@ class RoutingInitializer extends ServiceInitializer
 {
     public function initialize(): void
     {
-        $this->router
-            ->healthChecks()
-            ->resources('friends', ReadinessController::class, ResourceOptions::default())
-            ->namespace('users', function (HttpRouterBuilder $router) {
-                $router
-                    ->get('/', ReadinessController::class)
-                    ->get('/{id|int}', ReadinessController::class)
-                    ->get('/{id}', ReadinessController::class);
+        $this->configure(function (HttpRouterBuilder $router) {
+            $router->healthChecks();
+            $router->resources('friends', ReadinessController::class, ResourceOptions::default());
+            $router->namespace('users', function (HttpRouterBuilder $router) {
+                $router->get('/', ReadinessController::class);
+                $router->get('/{id|int}', ReadinessController::class);
+                $router->get('/{id}', ReadinessController::class);
             });
+        });
     }
 }

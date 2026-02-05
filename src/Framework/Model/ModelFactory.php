@@ -15,7 +15,7 @@ class ModelFactory
     public function __construct(
         protected readonly Container $container,
         protected readonly DatabaseConnection $connection,
-        protected readonly ModelManager $casts,
+        protected readonly TypeCasterCollection $casters,
     ) {
     }
 
@@ -55,7 +55,7 @@ class ModelFactory
 
         $columns = [];
         foreach ($classRef->getProperties(ReflectionProperty::IS_PUBLIC) as $ref) {
-            $columns[$ref->name] = ColumnInfo::fromReflection($this->casts, $ref);
+            $columns[$ref->name] = ColumnInfo::fromReflection($this->casters, $ref);
         }
 
         return new TableInfo(
