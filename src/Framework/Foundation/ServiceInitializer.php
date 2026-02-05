@@ -4,7 +4,6 @@ namespace Kirameki\Framework\Foundation;
 
 use Closure;
 use Kirameki\Container\Builder;
-use Kirameki\Container\Container;
 use Kirameki\Container\ContainerBuilder;
 use Kirameki\Exceptions\LogicException;
 use Kirameki\Exceptions\RuntimeException;
@@ -31,10 +30,7 @@ abstract class ServiceInitializer
     /**
      * @return void
      */
-    public function initialize(): void
-    {
-        // Override in subclass
-    }
+    abstract public function initialize(): void;
 
     /**
      * @template TBuilder of Builder
