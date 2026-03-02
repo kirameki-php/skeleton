@@ -14,9 +14,8 @@ class ModelInitializer extends ServiceInitializer
 {
     public function initialize(): void
     {
-        $this->container->builder(TypeCasterCollectionBuilder::class, TypeCasterCollection::class);
-
-        $this->configure(static function (TypeCasterCollectionBuilder $casters) {
+        $entry = $this->container->builder(TypeCasterCollectionBuilder::class, TypeCasterCollection::class);
+        $entry->configure(static function (TypeCasterCollectionBuilder $casters) {
             $casters->set('bool', static fn() => new BoolCast());
             $casters->set('int', static fn() => new IntCast());
             $casters->set('float', static fn() => new FloatCast());

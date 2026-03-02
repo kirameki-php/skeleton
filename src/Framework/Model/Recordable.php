@@ -5,7 +5,7 @@ namespace Kirameki\Framework\Model;
 use Closure;
 use Kirameki\Database\DatabaseConnection;
 use Kirameki\Exceptions\RuntimeException;
-use Kirameki\Framework\Model\Casts\Cast;
+use Throwable;
 
 /**
  * @template TModel of Model
@@ -13,14 +13,33 @@ use Kirameki\Framework\Model\Casts\Cast;
 trait Recordable
 {
     /**
-     * @var bool
+     * @var ModelState
      */
-    protected bool $_deleted = false;
+    protected ModelState $_state = ModelState::New;
 
     /**
-     * @var bool
+     * @return bool
      */
-    protected bool $_processing = false;
+    public function isNewRecord(): bool
+    {
+        return $this->_state === ModelState::New;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStored(): bool
+    {
+        return $this->_state === ModelState::Stored;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeleted(): bool
+    {
+        return $this->_state === ModelState::Deleted;
+    }
 
     /**
      * @return DatabaseConnection
@@ -31,20 +50,15 @@ trait Recordable
     }
 
     /**
-     * @param string $name
-     * @return Cast
-     */
-    public function getCast(string $name): Cast
-    {
-        return $this->table->columns[$name]->cast;
-    }
-
-    /**
      * @return list<array-key>
      */
     public function getPrimaryKeys(): array
     {
-        return array_map($this->getProperty(...), $this->table->primaryKeys);
+        $keys = [];
+        foreach ($this->table->primaryKeys as $name) {
+            $keys[] = $this->getProperty($name);
+        }
+        return $keys;
     }
 
     /**
@@ -59,42 +73,17 @@ trait Recordable
             );
         }
 
-        $this->processing(function(DatabaseConnection $conn) {
-            $table = $this->table->name;
-
+        $this->processing(function() {
             $this->isNewRecord()
-                ? $conn->query()->insertInto($table)->value($this->getPropertiesForInsert())->execute()
-                : $conn->query()->update($table)->set($this->getPropertiesForUpdate())->execute();
-
-            $this->setDirtyPropertiesAsPersisted();
-            $this->clearDirtyProperties();
+                ? $this->insertProperties()
+                : $this->updateProperties();
+            $this->setUnsavedPropertiesAsPersisted();
+            $this->clearUnsavedProperties();
         });
 
+        $this->_state = ModelState::Stored;
+
         return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isNewRecord(): bool
-    {
-        return !$this->_persisted && !$this->_deleted;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPersisted(): bool
-    {
-        return $this->_persisted && !$this->_deleted;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isDeleted(): bool
-    {
-        return $this->_deleted;
     }
 
     /**
@@ -113,19 +102,24 @@ trait Recordable
             }
         }
 
-        $this->processing(function(DatabaseConnection $conn) {
-            $query = $conn->query()->deleteFrom($this->table->name);
-
+        $deleted = false;
+        $this->processing(function() use (&$deleted) {
+            $query = $this->getConnection()->query()->deleteFrom($this->table->name);
             foreach ($this->table->primaryKeys as $primaryKeyName) {
                 $query->where($primaryKeyName, $this->getProperty($primaryKeyName));
             }
             $result = $query->execute();
-            $count = $result->affectedRowCount;
 
-            $this->_deleted = $count > 0;
+            if ($result->affectedRowCount > 0) {
+                $deleted = true;
+            }
         });
 
-        return $this->_deleted;
+        if ($deleted) {
+            $this->_state = ModelState::Deleted;
+        }
+        
+        return $deleted;
     }
 
     /**
@@ -133,15 +127,39 @@ trait Recordable
      */
     protected function processing(Closure $callback): void
     {
+        $current = $this->_state;
         try {
-            if (!$this->_processing) {
-                $this->_processing = true;
+            if ($this->_state !== ModelState::Processing) {
+                $this->_state = ModelState::Processing;
                 $callback($this->getConnection());
             }
         }
-        finally {
-            $this->_processing = false;
+        catch (Throwable $e) {
+            $this->_state = $current;
+            throw $e;
         }
+    }
+
+    /**
+     * @return void
+     */
+    protected function insertProperties(): void
+    {
+        $this->getConnection()->query()
+            ->insertInto($this->table->name)
+            ->value($this->getPropertiesForInsert())
+            ->execute();
+    }
+
+    /**
+     * @return void
+     */
+    protected function updateProperties(): void
+    {
+        $this->getConnection()->query()
+            ->update($this->table->name)
+            ->set($this->getPropertiesForUpdate())
+            ->execute();
     }
 
     /**
@@ -157,6 +175,6 @@ trait Recordable
      */
     protected function getPropertiesForUpdate(): array
     {
-        return $this->getDirtyProperties();
+        return $this->getUnsavedProperties();
     }
 }

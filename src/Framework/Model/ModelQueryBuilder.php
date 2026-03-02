@@ -36,6 +36,7 @@ class ModelQueryBuilder extends SelectBuilder
      */
     public function toBase(): SelectBuilder
     {
+        /** @noinspection PhpParamsInspection */
         return new SelectBuilder($this->handler, $this->statement);
     }
 

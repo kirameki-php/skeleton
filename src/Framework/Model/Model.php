@@ -19,7 +19,7 @@ abstract class Model
      *
      * @var array<string, mixed>
      */
-    protected array $_persistedProperties = [];
+    protected array $_stored = [];
 
     /**
      * Stores and caches properties that were resolved.
@@ -27,14 +27,14 @@ abstract class Model
      *
      * @var array<string, mixed>
      */
-    protected array $_resolvedProperties = [];
+    protected array $_resolved = [];
 
     /**
      * Stores initial values for properties that were changed.
      *
      * @var array<string, mixed>
      */
-    protected array $_changedProperties = [];
+    protected array $_changed = [];
 
     /**
      * Stores previous value of properties.
@@ -42,12 +42,7 @@ abstract class Model
      *
      * @var array<string, mixed>
      */
-    protected array $_previousProperties = [];
-
-    /**
-     * @var bool
-     */
-    public protected(set) bool $_persisted = false;
+    protected array $_previous = [];
 
     /**
      * @param DatabaseManager $db
@@ -65,11 +60,16 @@ abstract class Model
      */
     public function getProperty(string $name): mixed
     {
-        if (array_key_exists($name, $this->_resolvedProperties)) {
-            return $this->_resolvedProperties[$name];
+        if (array_key_exists($name, $this->_resolved)) {
+            return $this->_resolved[$name];
         }
-        $value = $this->getPersistedProperty($name);
+
+        $value = array_key_exists($name, $this->_stored)
+            ? $this->table->columns[$name]->cast->get($this, $name, $this->_stored[$name])
+            : null;
+
         $this->setResolvedProperty($name, $value);
+
         return $value;
     }
 
@@ -81,20 +81,9 @@ abstract class Model
      */
     protected function setProperty(string $name, mixed $value): mixed
     {
-        $this->markAsDirty($name, $this->getProperty($name));
+        $this->markAsUnsaved($name, $this->getProperty($name));
         $this->setResolvedProperty($name, $value);
         return $value;
-    }
-
-    /**
-     * @param string $name
-     * @return mixed
-     */
-    protected function getPersistedProperty(string $name): mixed
-    {
-        return array_key_exists($name, $this->_persistedProperties)
-            ? $this->getCast($name)->get($this, $name, $this->_persistedProperties[$name])
-            : null;
     }
 
     /**
@@ -104,7 +93,7 @@ abstract class Model
      */
     protected function setResolvedProperty(string $name, mixed $value): void
     {
-        $this->_resolvedProperties[$name] = $value;
+        $this->_resolved[$name] = $value;
     }
 
     /**
@@ -129,46 +118,15 @@ abstract class Model
     }
 
     /**
+     * @internal
      * @param array<string, mixed> $properties
      * @return $this
      */
-    public function setProperties(array $properties = []): static
+    public function setStoredProperties(array $properties): static
     {
-        foreach ($properties as $name => $value) {
-            $this->setProperty($name, $value);
-        }
+        $this->_stored = $properties;
+        $this->_state = ModelState::Stored;
         return $this;
-    }
-
-    /**
-     * @param array<string, mixed> $properties
-     * @return $this
-     */
-    public function setPersistedProperties(array $properties): static
-    {
-        $this->_persistedProperties = $properties;
-        $this->_persisted = true;
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function clearResolvedProperties(): static
-    {
-        $this->_resolvedProperties = [];
-        return $this;
-    }
-
-    /**
-     * @param string|null $name
-     * @return bool
-     */
-    public function isResolved(?string $name = null): bool
-    {
-        return $name !== null
-            ? array_key_exists($name, $this->_resolvedProperties)
-            : !empty($this->_resolvedProperties);
     }
 
     /**
@@ -177,77 +135,9 @@ abstract class Model
      */
     public function getInitialProperty(string $name): mixed
     {
-        return array_key_exists($name, $this->_changedProperties)
-            ? $this->_changedProperties[$name]
+        return array_key_exists($name, $this->_changed)
+            ? $this->_changed[$name]
             : $this->getProperty($name);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getInitialProperties(): array
-    {
-        $props = [];
-        foreach ($this->getPropertyNames() as $name) {
-            $props[$name] = $this->getInitialProperty($name);
-        }
-        return $props;
-    }
-
-    /**
-     * @param string $name
-     * @param mixed $oldValue
-     * @return $this
-     */
-    protected function markAsDirty(string $name, mixed $oldValue): static
-    {
-        if (!array_key_exists($name, $this->_changedProperties)) {
-            $this->_changedProperties[$name] = $oldValue;
-        }
-        $this->_previousProperties[$name] = $oldValue;
-        return $this;
-    }
-
-    /**
-     * @param string|null $name
-     * @return bool
-     */
-    public function isDirty(?string $name = null): bool
-    {
-        return $name !== null
-            ? array_key_exists($name, $this->_previousProperties)
-            : !empty($this->_previousProperties);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getDirtyProperties(): array
-    {
-        $props = [];
-        foreach ($this->_previousProperties as $name => $_) {
-            $props[$name] = $this->getProperty($name);
-        }
-        return $props;
-    }
-
-    /**
-     * @return void
-     */
-    protected function setDirtyPropertiesAsPersisted(): void
-    {
-        foreach($this->_previousProperties as $name => $value) {
-            $this->_persistedProperties[$name] = $value;
-        }
-    }
-
-    /**
-     * @return $this
-     */
-    protected function clearDirtyProperties(): static
-    {
-        $this->_previousProperties = [];
-        return $this;
     }
 
     /**
@@ -256,35 +146,94 @@ abstract class Model
      */
     public function getPreviousProperty(string $name): mixed
     {
-        return $this->_previousProperties[$name] ?? null;
+        return $this->_previous[$name] ?? null;
+    }
+
+    /**
+     * @param string $name
+     * @param mixed $oldValue
+     * @return void
+     */
+    protected function markAsUnsaved(string $name, mixed $oldValue): void
+    {
+        if (!array_key_exists($name, $this->_changed)) {
+            $this->_changed[$name] = $oldValue;
+        }
+
+        if (!array_key_exists($name, $this->_previous)) {
+            $this->_previous[$name] = $oldValue;
+        }
+
+        $this->_state = ModelState::Dirty;
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function isDirty(string $name): bool
+    {
+        return count($this->_previous) > 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasDirty(): bool
+    {
+        return count($this->_previous) > 0;
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function getPreviousProperties(): array
+    protected function getUnsavedProperties(): array
     {
-        return $this->_previousProperties;
+        $props = [];
+        foreach ($this->_previous as $name => $_) {
+            $props[$name] = $this->getProperty($name);
+        }
+        return $props;
     }
 
     /**
-     * @param string|null $name
-     * @return bool
+     * @return void
      */
-    public function wasChanged(?string $name = null): bool
+    protected function setUnsavedPropertiesAsPersisted(): void
     {
-        return $name !== null
-            ? array_key_exists($name, $this->_changedProperties)
-            : count($this->_changedProperties) > 0;
+        foreach($this->getUnsavedProperties() as $name => $value) {
+            $this->_stored[$name] = $value;
+        }
     }
 
     /**
      * @return $this
      */
-    public function clearChanges(): static
+    protected function clearUnsavedProperties(): static
     {
-        $this->_changedProperties = [];
-        $this->_previousProperties = [];
+        $this->_previous = [];
+
+        $this->_state = $this->isNewRecord()
+            ? ModelState::New
+            : ModelState::Stored;
+
         return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function wasChanged(string $name): bool
+    {
+        return array_key_exists($name, $this->_changed);
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasChanges(): bool
+    {
+        return count($this->_changed) > 0;
     }
 }

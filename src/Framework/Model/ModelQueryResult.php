@@ -67,7 +67,7 @@ class ModelQueryResult extends QueryResult
     protected function newFromQueryRow(array $row): Model
     {
         $model = ($this->generator)();
-        $model->setPersistedProperties($row);
+        $model->setStoredProperties($row);
         return $model;
     }
 }
