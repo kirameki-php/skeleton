@@ -14,7 +14,7 @@ class ModelQueryBuilder extends SelectBuilder
 {
     /**
      * @param TModel $model
-     * @param Closure(): TModel $generator
+     * @param Closure(iterable<string, mixed>): TModel $generator
      */
     public function __construct(
         public readonly Model $model,

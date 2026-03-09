@@ -14,15 +14,6 @@ use Throwable;
 abstract class Model
 {
     /**
-     * This has raw values that come directly from the database.
-     * For example, the datetime values are stored as string
-     * and will not cast until it is actually used.
-     *
-     * @var array<string, mixed>
-     */
-    protected array $_stored = [];
-
-    /**
      * Stores and caches properties that were resolved.
      * Casting occurs when a value is set or when a value is called though get.
      *
@@ -46,17 +37,22 @@ abstract class Model
     protected array $_previous = [];
 
     /**
-     * @var ModelState
-     */
-    protected ModelState $_state = ModelState::New;
-
-    /**
      * @param DatabaseManager $db
+     * Database manager is used to get the connection for the model.
      * @param TableInfo $table
+     * The table info contains the column definitions and primary key information.
+     * @param array<string, mixed> $_stored
+     * This has raw values that come directly from the database.
+     * For example, the datetime values are stored as string
+     * and will not cast until it is actually used.
+     * @param ModelState $_state
+     * Model state is used to determine if the record is new, dirty, stored, or deleted.
      */
     public function __construct(
         protected readonly DatabaseManager $db,
         public readonly TableInfo $table,
+        protected array $_stored = [],
+        protected ModelState $_state = ModelState::New,
     ) {
     }
 
@@ -121,18 +117,6 @@ abstract class Model
             $properties[$name] = $this->getProperty($name);
         }
         return $properties;
-    }
-
-    /**
-     * @internal
-     * @param array<string, mixed> $properties
-     * @return $this
-     */
-    public function setStoredProperties(array $properties): static
-    {
-        $this->_stored = $properties;
-        $this->_state = ModelState::Stored;
-        return $this;
     }
 
     /**

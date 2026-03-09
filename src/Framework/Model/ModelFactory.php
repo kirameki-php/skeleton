@@ -26,20 +26,23 @@ class ModelFactory
     {
         return new ModelQueryBuilder(
             $this->generate(User::class),
-            fn() => $this->generate(User::class),
+            fn(iterable $data) => $this->generate(User::class, $data),
         );
     }
 
     /**
      * @template TModel of Model
      * @param class-string<TModel> $class
+     * @param iterable<string, mixed> $properties
      * @return TModel
      */
-    public function generate(string $class): object
+    public function generate(string $class, iterable $properties = []): object
     {
         return $this->container->make($class, [
             'db' => $this->container->get(DatabaseManager::class),
             'table' => $this->getTableInfo(User::class),
+            '_stored' => iterator_to_array($properties),
+            '_state' => ModelState::Stored,
         ]);
     }
 

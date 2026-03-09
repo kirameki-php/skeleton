@@ -16,7 +16,7 @@ class ModelQueryResult extends QueryResult
 {
     /**
      * @param QueryResult<SelectStatement, TModel> $result
-     * @param Closure(): TModel $generator
+     * @param Closure(iterable<string, mixed>): TModel $generator
      */
     public function __construct(
         QueryResult $result,
@@ -66,8 +66,6 @@ class ModelQueryResult extends QueryResult
      */
     protected function newFromQueryRow(array $row): Model
     {
-        $model = ($this->generator)();
-        $model->setStoredProperties($row);
-        return $model;
+        return ($this->generator)($row);
     }
 }
