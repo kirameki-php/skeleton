@@ -10,13 +10,14 @@ class ValidationResultBuilder
     private array $errors = [];
 
     /**
-     * @param string $path
+     * @param list<string> $path
      * @param string $message
+     * @param array<string, mixed> $context
      * @return $this
      */
-    public function addError(string $path, string $message): static
+    public function addError(array $path, string $message, array $context = []): static
     {
-        $this->errors[] = new ValidationError($path, $message);
+        $this->errors[] = new ValidationError(implode('.', $path), $message, $context);
         return $this;
     }
 

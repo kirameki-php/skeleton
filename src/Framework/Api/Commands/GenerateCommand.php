@@ -4,6 +4,7 @@ namespace Kirameki\Framework\Api\Commands;
 
 use Kirameki\Framework\Console\Command;
 use Kirameki\Framework\Console\CommandBuilder;
+use Kirameki\Framework\JsonSchema\JsonSchema;
 use Kirameki\Framework\JsonSchema\JsonSchemaValidator;
 use Kirameki\Process\ExitCode;
 use Kirameki\Storage\Directory;
@@ -32,17 +33,13 @@ class GenerateCommand extends Command
     protected function run(): ?int
     {
         $dir = new Directory('oapi');
+        $schema = new JsonSchema();
         $validator = new JsonSchemaValidator();
         foreach ($dir->scanRecursively()->all() as $file) {
             if ($file instanceof File && $file->extension === 'yaml') {
                 $string = $file->read();
                 $data = yaml_parse($string);
-                $definition = JsonSchema;
-                foreach ($data as $name => $value) {
-
-                }
-
-                $validator->validate($file);
+                $validator->validate($schema, $data);
             }
         }
 

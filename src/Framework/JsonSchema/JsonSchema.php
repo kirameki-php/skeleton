@@ -60,7 +60,7 @@ final class JsonSchema
             required: $data['required'] ?? false,
             then: $data['then'] ?? null,
             title: $data['title'] ?? null,
-            type: isset($data['type']) ? self::from($data['type']) : null,
+            type: $data['type'] ?? null,
             unevaluatedItems: $data['unevaluatedItems'] ?? null,
             unevaluatedProperties: $data['unevaluatedProperties'] ?? null,
             uniqueItems: $data['uniqueItems'] ?? null,
@@ -78,8 +78,8 @@ final class JsonSchema
      * @param string|null $_schema
      * @param string|null $_vocabulary
      * @param bool $additionalProperties
-     * @param list<JsonSchema>|null $allOf
-     * @param list<JsonSchema>|null $anyOf
+     * @param list<self>|null $allOf
+     * @param list<self>|null $anyOf
      * @param mixed $const
      * @param self|null $contains
      * @param string|null $contentEncoding
@@ -97,7 +97,7 @@ final class JsonSchema
      * @param string|null $exclusiveMinimum
      * @param string|null $format
      * @param self|null $if
-     * @param JsonSchema|null $items
+     * @param self|null $items
      * @param string|null $maximum
      * @param string|null $maxItems
      * @param string|null $maxLength
@@ -107,11 +107,11 @@ final class JsonSchema
      * @param string|null $minLength
      * @param string|null $minProperties
      * @param int|float|null $multipleOf
-     * @param JsonSchema|null $not
-     * @param list<JsonSchema>|null $oneOf
+     * @param self|null $not
+     * @param list<self>|null $oneOf
      * @param string|null $pattern
      * @param array<string, self>|null $patternProperties
-     * @param string|null $prefixItems
+     * @param list<self>|null $prefixItems
      * @param array<string, self>|null $properties
      * @param array<string, self>|null $propertyNames
      * @param bool $readOnly
@@ -153,7 +153,7 @@ final class JsonSchema
         public ?string $exclusiveMinimum = null,
         public ?string $format = null,
         public ?self $if = null,
-        public ?self $items = null,
+        public self|false|null $items = null,
         public ?string $maximum = null,
         public ?string $maxItems = null,
         public ?string $maxLength = null,
@@ -167,14 +167,14 @@ final class JsonSchema
         public ?array $oneOf = null,
         public ?string $pattern = null,
         public ?array $patternProperties = null,
-        public ?string $prefixItems = null,
+        public ?array $prefixItems = null,
         public ?array $properties = null,
         public ?array $propertyNames = null,
         public bool $readOnly = false,
         public bool $required = false,
         public ?self $then = null,
         public ?string $title = null,
-        public ?JsonSchema $type = null,
+        public DataType|array|null $type = null,
         public ?bool $unevaluatedItems = null,
         public ?bool $unevaluatedProperties = null,
         public ?string $uniqueItems = null,
