@@ -186,6 +186,24 @@ class JsonSchemaValidator
      */
     protected function validateObjectType(JsonSchema $schema, object $data, array $path, ValidationResultBuilder $result): void
     {
+        $value = $this->getValueFromPath($data, $path);
+
+        if (!is_object($value)) {
+            $result->addError($path, 'Expected type: object, got ' . get_debug_type($value));
+        }
+
+        $properties = $schema->properties;
+        if ($properties !== null) {
+            /** @phpstan-ignore function.impossibleType */
+            if (array_is_list($properties)) {
+                $result->addError($path, 'Properties must be an object, got array');
+            } else {
+                foreach ($properties as $name => $property) {
+                    $this->validateType($property, $value, [...$path, $name], $result);
+                }
+            }
+
+        }
     }
 
     /**
