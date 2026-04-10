@@ -4,7 +4,9 @@ namespace Kirameki\Framework\JsonSchema;
 
 class JsonSchemaValidator
 {
-    public function __construct()
+    public function __construct(
+        protected FormatValidatorFactory $formatValidators,
+    )
     {
     }
 
@@ -114,6 +116,21 @@ class JsonSchemaValidator
             return;
         }
 
+        if ($schema->format !== null) {
+            $format = $schema->format;
+            if (in_array($format, [
+                'date-time',
+                'date',
+                'duration',
+                'email',
+                'hostname',
+                'time',
+                'uuid',
+            ], true)) {
+                $this->formatValidators->get($format)->validate($schema, $data, $path, $result);
+            }
+        }
+
         $minLength = $schema->minLength;
         if ($minLength !== null && strlen($value) < $minLength) {
             $result->addError($path, "String length must be >= {$minLength}", ['got' => $value]);
@@ -194,15 +211,31 @@ class JsonSchemaValidator
 
         $properties = $schema->properties;
         if ($properties !== null) {
-            /** @phpstan-ignore function.impossibleType */
-            if (array_is_list($properties)) {
-                $result->addError($path, 'Properties must be an object, got array');
-            } else {
-                foreach ($properties as $name => $property) {
-                    $this->validateType($property, $value, [...$path, $name], $result);
+            foreach ($value as $name => $val) {
+                if (array_key_exists($name, $properties)) {
+                    $property = $properties[$name];
+                    unset($properties[$name]);
+                    $this->validateType($property, $val, [...$path, $name], $result);
+                } else {
+                    if ($schema->patternProperties !== null) {
+                        foreach ($schema->patternProperties as $pattern => $property) {
+                            if (preg_match('~' . str_replace('~', '\~', $pattern) . '~', $name)) {
+                                $this->validateType($property, $val, [...$path, $name], $result);
+                                continue 2;
+                            }
+                        }
+                    }
+
+                    if ($schema->additionalProperties === false) {
+                        $result->addError($path, "Property {$name} is not allowed", ['got' => $value]);
+                    }
                 }
             }
-
+            foreach ($properties as $name => $property) {
+                if ($schema->required !== null && in_array($name, $schema->required, true)) {
+                    $result->addError($path, "Property {$name} is required", ['got' => $value]);
+                }
+            }
         }
     }
 
@@ -216,6 +249,7 @@ class JsonSchemaValidator
     protected function validateNullType(JsonSchema $schema, object $data, array $path, ValidationResultBuilder $result): void
     {
         $value = $this->getValueFromPath($data, $path);
+
         if (!is_null($value)) {
             $result->addError($path, 'Expected type: null, got ' . get_debug_type($value));
         }

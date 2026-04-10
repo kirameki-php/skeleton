@@ -57,7 +57,7 @@ final class JsonSchema
             properties: $data['properties'] ?? null,
             propertyNames: $data['propertyNames'] ?? null,
             readOnly: $data['readOnly'] ?? false,
-            required: $data['required'] ?? false,
+            required: $data['required'] ?? null,
             then: $data['then'] ?? null,
             title: $data['title'] ?? null,
             type: $data['type'] ?? null,
@@ -115,7 +115,7 @@ final class JsonSchema
      * @param array<string, self>|null $properties
      * @param array<string, self>|null $propertyNames
      * @param bool $readOnly
-     * @param bool $required
+     * @param list<string> $required
      * @param self|null $then
      * @param string|null $title
      * @param DataType|list<DataType>|null $type
@@ -171,7 +171,7 @@ final class JsonSchema
         public ?array $properties = null,
         public ?array $propertyNames = null,
         public bool $readOnly = false,
-        public bool $required = false,
+        public ?array $required = null,
         public ?self $then = null,
         public ?string $title = null,
         public DataType|array|null $type = null,
