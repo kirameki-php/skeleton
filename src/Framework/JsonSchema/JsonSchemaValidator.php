@@ -325,4 +325,23 @@ class JsonSchemaValidator
             $result->addError($path, "{$value} must be one of: " . implode(', ', $candidates), ['got' => $value]);
         }
     }
+
+    /**
+     * @param JsonSchema $schema
+     * @param object $data
+     * @param list<string> $path
+     * @param ValidationResultBuilder $result
+     * @return void
+     */
+    protected function checkFormat(JsonSchema $schema, object $data, array $path, ValidationResultBuilder $result): void
+    {
+        $targetFormats = match ($schema->type) {
+            DataType::String => ['date-time', 'date', 'duration', 'email', 'hostname', 'time', 'uuid'],
+            default => [],
+        };
+
+        if (in_array($schema->format, $targetFormats, true)) {
+            $this->formatValidators->get($schema->format)->validate($schema, $data, $path, $result);
+        }
+    }
 }

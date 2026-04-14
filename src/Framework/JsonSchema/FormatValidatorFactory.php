@@ -9,6 +9,8 @@ use Kirameki\Framework\JsonSchema\Formats\DurationValidator;
 use Kirameki\Framework\JsonSchema\Formats\EmailValidator;
 use Kirameki\Framework\JsonSchema\Formats\FormatValidator;
 use Kirameki\Framework\JsonSchema\Formats\HostnameValidator;
+use Kirameki\Framework\JsonSchema\Formats\Int32Validator;
+use Kirameki\Framework\JsonSchema\Formats\Int64Validator;
 use Kirameki\Framework\JsonSchema\Formats\TimeValidator;
 use Kirameki\Framework\JsonSchema\Formats\UuidValidator;
 
@@ -38,6 +40,7 @@ class FormatValidatorFactory
     protected function resolve(string $format): FormatValidator
     {
         return match ($format) {
+            // string
             DateTimeValidator::FORMAT => new DateTimeValidator(),
             DateValidator::FORMAT => new DateValidator(),
             DurationValidator::FORMAT => new DurationValidator(),
@@ -45,6 +48,9 @@ class FormatValidatorFactory
             HostnameValidator::FORMAT => new HostnameValidator(),
             TimeValidator::FORMAT => new TimeValidator(),
             UuidValidator::FORMAT => new UuidValidator(),
+            // integer
+            Int32Validator::FORMAT => new Int32Validator(),
+            Int64Validator::FORMAT => new Int64Validator(),
             default => throw new NotSupportedException("Format '{$format}' is not supported.")
         };
     }
