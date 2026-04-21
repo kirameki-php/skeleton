@@ -2,44 +2,48 @@
 
 namespace Kirameki\Framework\JsonSchema;
 
+use Kirameki\Collections\Utils\Arr;
+
 final class JsonSchema
 {
     /**
      * @param array<string, mixed> $data
      * @return self
      */
-    public static function from(array $data):  self
+    public static function from(array $data): self
     {
         return new self(
-            _id: $data['_id'] ?? null,
-            _comment: $data['_comment'] ?? null,
-            _defs: $data['_defs'] ?? null,
-            _dynamicAnchor: $data['_dynamicAnchor'] ?? null,
-            _dynamicRef: $data['_dynamicRef'] ?? null,
-            _ref: $data['_ref'] ?? null,
-            _schema: $data['_schema'] ?? 'https://json-schema.org/draft/2020-12/schema',
-            _vocabulary: $data['_vocabulary'] ?? 'https://json-schema.org/draft/2020-12/schema',
+            _id: $data['$id'] ?? null,
+            _comment: $data['$comment'] ?? null,
+            _defs: self::mapOfSchemas($data['$defs'] ?? null),
+            _dynamicAnchor: $data['$dynamicAnchor'] ?? null,
+            _dynamicRef: $data['$dynamicRef'] ?? null,
+            _ref: $data['$ref'] ?? null,
+            _schema: $data['$schema'] ?? 'https://json-schema.org/draft/2020-12/schema',
+            _vocabulary: $data['$vocabulary'] ?? 'https://json-schema.org/draft/2020-12/schema',
             additionalProperties: $data['additionalProperties'] ?? false,
-            allOf: $data['allOf'] ?? null,
-            anyOf: $data['anyOf'] ?? null,
+            allOf: self::listOfSchemas($data['allOf'] ?? null),
+            anyOf: self::listOfSchemas($data['anyOf'] ?? null),
             const: $data['const'] ?? null,
-            contains: $data['contains'] ?? null,
+            contains: self::maybeSchema($data['contains'] ?? null),
             contentEncoding: $data['contentEncoding'] ?? null,
             contentMediaType: $data['contentMediaType'] ?? null,
             contentSchema: $data['contentSchema'] ?? null,
             default: $data['default'] ?? null,
             dependentRequired: $data['dependentRequired'] ?? null,
-            dependentSchemas: $data['dependentSchemas'] ?? null,
+            dependentSchemas: self::mapOfSchemas($data['dependentSchemas'] ?? null),
             deprecated: $data['deprecated'] ?? false,
             description: $data['description'] ?? null,
-            else: $data['else'] ?? null,
+            else: self::maybeSchema($data['else'] ?? null),
             enum: $data['enum'] ?? null,
             examples: $data['examples'] ?? null,
             exclusiveMaximum: $data['exclusiveMaximum'] ?? null,
             exclusiveMinimum: $data['exclusiveMinimum'] ?? null,
             format: $data['format'] ?? null,
-            if: $data['if'] ?? null,
-            items: $data['items'] ?? null,
+            if: self::maybeSchema($data['if'] ?? null),
+            items: isset($data['items']) && $data['items'] === false
+                ? false
+                : self::maybeSchema($data['items'] ?? null),
             maximum: $data['maximum'] ?? null,
             maxItems: $data['maxItems'] ?? null,
             maxLength: $data['maxLength'] ?? null,
@@ -49,18 +53,18 @@ final class JsonSchema
             minLength: $data['minLength'] ?? null,
             minProperties: $data['minProperties'] ?? null,
             multipleOf: $data['multipleOf'] ?? null,
-            not: isset($data['not']) ? self::from($data['not']) : null,
-            oneOf: $data['oneOf'] ?? null,
+            not: self::maybeSchema($data['not'] ?? null),
+            oneOf: self::listOfSchemas($data['oneOf'] ?? null),
             pattern: $data['pattern'] ?? null,
-            patternProperties: $data['patternProperties'] ?? null,
-            prefixItems: $data['prefixItems'] ?? null,
-            properties: $data['properties'] ?? null,
-            propertyNames: $data['propertyNames'] ?? null,
+            patternProperties: self::mapOfSchemas($data['patternProperties'] ?? null),
+            prefixItems: self::listOfSchemas($data['prefixItems'] ?? null),
+            properties: self::mapOfSchemas($data['properties'] ?? null),
+            propertyNames: self::mapOfSchemas($data['propertyNames'] ?? null),
             readOnly: $data['readOnly'] ?? false,
             required: $data['required'] ?? null,
-            then: $data['then'] ?? null,
+            then: self::maybeSchema($data['then'] ?? null),
             title: $data['title'] ?? null,
-            type: $data['type'] ?? null,
+            type: self::parseType($data['type'] ?? null),
             unevaluatedItems: $data['unevaluatedItems'] ?? null,
             unevaluatedProperties: $data['unevaluatedProperties'] ?? null,
             uniqueItems: $data['uniqueItems'] ?? null,
@@ -69,9 +73,71 @@ final class JsonSchema
     }
 
     /**
-     * @param string $_id
+     * @param mixed $value
+     */
+    private static function maybeSchema(mixed $value): ?self
+    {
+        if ($value === null) {
+            return null;
+        }
+        if ($value instanceof self) {
+            return $value;
+        }
+        if (is_array($value)) {
+            return self::from($value);
+        }
+        return null;
+    }
+
+    /**
+     * @param mixed $value
+     * @return list<self>|null
+     */
+    private static function listOfSchemas(mixed $value): ?array
+    {
+        if (!is_array($value)) {
+            return null;
+        }
+        return array_values(array_map(self::from(...), $value));
+    }
+
+    /**
+     * @param mixed $value
+     * @return array<string, self>|null
+     */
+    private static function mapOfSchemas(mixed $value): ?array
+    {
+        if (!is_array($value)) {
+            return null;
+        }
+        $out = [];
+        foreach ($value as $k => $v) {
+            $out[(string)$k] = self::from($v);
+        }
+        return $out;
+    }
+
+    /**
+     * @param mixed $value
+     * @return DataType|list<DataType>|null
+     */
+    private static function parseType(mixed $value): DataType|array|null
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_array($value) && array_is_list($value)) {
+            return array_map(DataType::from(...), $value);
+        }
+
+        return DataType::from($value);
+    }
+
+    /**
+     * @param string|null $_id
      * @param string|null $_comment
-     * @param string|null $_defs
+     * @param array<string, self>|null $_defs
      * @param string|null $_dynamicAnchor
      * @param string|null $_dynamicRef
      * @param string|null $_ref
@@ -97,7 +163,7 @@ final class JsonSchema
      * @param string|null $exclusiveMinimum
      * @param string|null $format
      * @param self|null $if
-     * @param self|null $items
+     * @param self|false|null $items
      * @param string|null $maximum
      * @param string|null $maxItems
      * @param string|null $maxLength
@@ -115,7 +181,7 @@ final class JsonSchema
      * @param array<string, self>|null $properties
      * @param array<string, self>|null $propertyNames
      * @param bool $readOnly
-     * @param list<string> $required
+     * @param list<string>|null $required
      * @param self|null $then
      * @param string|null $title
      * @param DataType|list<DataType>|null $type
@@ -127,7 +193,7 @@ final class JsonSchema
     public function __construct(
         public ?string $_id = null,
         public ?string $_comment = null,
-        public ?string $_defs = null,
+        public ?array $_defs = null,
         public ?string $_dynamicAnchor = null,
         public ?string $_dynamicRef = null,
         public ?string $_ref = null,

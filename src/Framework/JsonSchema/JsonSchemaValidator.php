@@ -4,6 +4,13 @@ namespace Kirameki\Framework\JsonSchema;
 
 class JsonSchemaValidator
 {
+    protected ?RefResolver $refResolver = null;
+
+    /**
+     * @var array<string, true> Tracks schemas currently being validated to break cycles.
+     */
+    protected array $visiting = [];
+
     public function __construct(
         protected FormatValidatorFactory $formatValidators,
     )
@@ -13,7 +20,14 @@ class JsonSchemaValidator
     public function validate(JsonSchema $schema, object $data): ValidationResult
     {
         $builder = new ValidationResultBuilder();
-        $this->validateType($schema, $data, [], $builder);
+        $this->refResolver = new RefResolver($schema);
+        $this->visiting = [];
+        try {
+            $this->validateType($schema, $data, [], $builder);
+        } finally {
+            $this->refResolver = null;
+            $this->visiting = [];
+        }
         return $builder->build();
     }
 
@@ -26,6 +40,20 @@ class JsonSchemaValidator
      */
     protected function validateType(JsonSchema $schema, mixed $data, array $path, ValidationResultBuilder $result): void
     {
+        if ($schema->_ref !== null && $this->refResolver !== null) {
+            $key = spl_object_id($schema) . '@' . implode('/', $path);
+            if (isset($this->visiting[$key])) {
+                return;
+            }
+            $this->visiting[$key] = true;
+            try {
+                $this->validateType($this->refResolver->resolve($schema->_ref), $data, $path, $result);
+            } finally {
+                unset($this->visiting[$key]);
+            }
+            return;
+        }
+
         if ($schema->type === null) {
             return;
         }
